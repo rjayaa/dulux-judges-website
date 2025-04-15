@@ -98,10 +98,17 @@ export default function EvaluationMethodPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center">
         <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="flex flex-col items-center">
+            <Image 
+              src="/favicon.ico" 
+              alt="Logo" 
+              width={64} 
+              height={64} 
+              className="mb-6"
+            />
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p className="text-center text-gray-600">Loading session...</p>
           </div>
-          <p className="text-center mt-4 text-gray-600">Loading session...</p>
         </div>
       </div>
     );
@@ -122,9 +129,18 @@ export default function EvaluationMethodPage() {
                 <span className="font-medium">Back</span>
               </Link> */}
               
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Evaluation Method
-              </h1>
+              <div className="flex items-center space-x-3">
+                <Image 
+                  src="/favicon.ico" 
+                  alt="Logo" 
+                  width={32} 
+                  height={32}
+                  className="h-8 w-auto"
+                />
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Evaluation Method
+                </h1>
+              </div>
             </div>
             
             <div className="flex items-center space-x-3">
@@ -139,8 +155,22 @@ export default function EvaluationMethodPage() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-gray-50 p-4">
         <div className="max-w-4xl mx-auto">
+          {/* Logo section */}
+          <div className="text-center mb-6 mt-2">
+            <div className="inline-block p-4 bg-white rounded-full shadow-sm border border-gray-200">
+              <Image 
+                src="/favicon.ico" 
+                alt="Logo" 
+                width={56} 
+                height={56}
+                className="h-14 w-auto"
+                priority
+              />
+            </div>
+          </div>
+          
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-5 border-b border-gray-200">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-xl font-bold text-gray-900">Choose Your Evaluation Method</h2>
                 
@@ -268,7 +298,7 @@ export default function EvaluationMethodPage() {
                 <button
                   onClick={handleContinue}
                   disabled={!selectedMethod || isLoading}
-                  className={`group flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  className={`group flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                     !selectedMethod || isLoading
                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                       : "bg-primary hover:bg-primary/90 text-white hover:shadow-lg"
@@ -284,9 +314,9 @@ export default function EvaluationMethodPage() {
           </div>
           
           {/* Info card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <div className="flex gap-4 items-start">
-              <div className="p-2 bg-primary/10 rounded-full text-primary">
+              <div className="p-2 bg-primary/10 rounded-full text-primary flex-shrink-0">
                 <Info className="w-5 h-5" />
               </div>
               <div>
@@ -298,6 +328,20 @@ export default function EvaluationMethodPage() {
               </div>
             </div>
           </div>
+          
+          {/* Footer with logo */}
+          <div className="mt-8 text-center">
+            <div className="inline-block">
+              <Image 
+                src="/favicon.ico" 
+                alt="Logo" 
+                width={40} 
+                height={40}
+                className="h-10 w-auto mx-auto opacity-70"
+              />
+              <p className="text-xs text-gray-500 mt-2">Design Competition Judging Panel</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -305,8 +349,18 @@ export default function EvaluationMethodPage() {
       {showConfirmation && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl border border-gray-200">
-            <h3 className="text-xl font-bold mb-4 text-gray-900">Confirm Your Selection</h3>
-            <p className="text-gray-600 mb-6">
+            <div className="flex justify-center mb-4">
+              <Image 
+                src="/favicon.ico" 
+                alt="Logo" 
+                width={48} 
+                height={48}
+                className="h-12 w-auto"
+              />
+            </div>
+            
+            <h3 className="text-xl font-bold mb-4 text-gray-900 text-center">Confirm Your Selection</h3>
+            <p className="text-gray-600 mb-6 text-center">
               You've selected <span className="font-semibold text-primary">
                 {selectedMethod === "checkbox" ? "Checkbox" : "Score"} Evaluation
               </span>. 
@@ -315,7 +369,7 @@ export default function EvaluationMethodPage() {
             
             <div className="p-4 mb-6 border border-gray-200 bg-gray-50 rounded-lg">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-md text-primary">
+                <div className="p-2 bg-primary/10 rounded-md text-primary flex-shrink-0">
                   {selectedMethod === "checkbox" ? 
                     <CheckSquare className="w-5 h-5" /> : 
                     <BarChart2 className="w-5 h-5" />

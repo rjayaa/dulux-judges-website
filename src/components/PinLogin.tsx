@@ -159,7 +159,7 @@ const PinLogin: React.FC<PinLoginProps> = ({ onLogin }) => {
       </button>
       
       <div className="mt-8 border-t border-gray-200 pt-4 text-center text-sm text-gray-500">
-        <p>Demo PINs: 123456, 654321, 111111</p>
+        {/* <p>Demo PINs: 123456, 654321, 111111</p> */}
         <p className="mt-2">If you forgot your PIN, please contact the administrator</p>
       </div>
       
