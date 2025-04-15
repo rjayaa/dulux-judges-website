@@ -121,31 +121,28 @@ export default function LoginPage() {
           className="opacity-80"
         />
         <div className="absolute inset-0 bg-blueDulux bg-opacity-40"></div>
-        <div className="relative h-full flex flex-col items-center justify-between p-12">
-          <div className="mt-24 mb-auto w-full max-w-md flex justify-center">
-            <Image
-              src="/favicon.ico"
-              alt="Dulux Logo"
-              width={180}
-              height={80}
-              className="w-auto h-auto"
-              priority
-            />
-          </div>
-
-          <div className="w-full max-w-md mb-12">
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm p-6 rounded-lg border border-white border-opacity-20 text-white">
-              <h3 className="text-2xl font-bold mb-3">Judging System</h3>
-              <p className="mb-4">
+        
+        {/* Centered Judging System content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4/5 max-w-2xl">
+            <div className="bg-white bg-opacity-15 backdrop-blur-md p-8 rounded-xl border border-white border-opacity-20 text-white">
+              <h3 className="text-3xl font-bold mb-5 tracking-wide">Judging System</h3>
+              <p className="text-lg mb-6 leading-relaxed">
                 Evaluate design submissions with our intuitive platform, designed for efficiency and accuracy.
               </p>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                  ?
+              
+              <div className="p-5 bg-white/10 rounded-lg border border-white/15">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                    ?
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">Need help?</p>
+                    <p className="text-sm text-white/90">
+                      Contact the administrator for assistance with your judging account.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm">
-                  Need help? Contact the administrator for assistance with your judging account.
-                </p>
               </div>
             </div>
           </div>
