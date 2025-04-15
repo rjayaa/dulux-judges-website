@@ -15,11 +15,13 @@ export default function EvaluationMethodPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [existingMethodRedirecting, setExistingMethodRedirecting] = useState(false);
   
-  // Check if user is authenticated
+  // Check if user is authenticated and if they already have a method set
   useEffect(() => {
     async function checkAuth() {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/auth', {
           method: 'GET',
           headers: {
@@ -31,8 +33,38 @@ export default function EvaluationMethodPage() {
         if (!response.ok) {
           // Not authenticated, redirect to login
           router.push('/login');
-        } else {
+          return;
+        }
+        
+        const data = await response.json();
+        
+        // If user is authenticated, check if they already have an evaluation method
+        if (data.success && data.authenticated) {
+          // Now check if the judge has already selected a method
+          const methodResponse = await fetch('/api/auth/method', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (methodResponse.ok) {
+            const methodData = await methodResponse.json();
+            
+            // If judge already has a method set, redirect to submissions page
+            if (methodData.success && methodData.method) {
+              setExistingMethodRedirecting(true);
+              router.push(`/submissions?method=${methodData.method}`);
+              return;
+            }
+          }
+          
+          // If we reach here, the judge is authenticated but doesn't have a method yet
           setCheckingSession(false);
+          setIsLoading(false);
+        } else {
+          // Not authenticated, redirect to login
+          router.push('/login');
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -114,6 +146,26 @@ export default function EvaluationMethodPage() {
     );
   }
   
+  if (existingMethodRedirecting) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex flex-col items-center">
+            <Image 
+              src="/favicon.ico" 
+              alt="Logo" 
+              width={64} 
+              height={64} 
+              className="mb-6"
+            />
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p className="text-center text-gray-600">You already have an evaluation method selected. Redirecting...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Navigation Bar */}
@@ -187,6 +239,16 @@ export default function EvaluationMethodPage() {
               <p className="text-gray-600">
                 Select how you'd like to evaluate submissions. This choice will determine your judging interface throughout the competition.
               </p>
+              
+              <div className="mt-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5 text-amber-500" />
+                <div>
+                  <p className="text-sm text-amber-800 font-medium">Important Notice</p>
+                  <p className="text-sm text-amber-700">
+                    This choice is permanent and cannot be changed later. Please select carefully.
+                  </p>
+                </div>
+              </div>
             </div>
             
             <div className="p-6">
@@ -364,7 +426,7 @@ export default function EvaluationMethodPage() {
               You've selected <span className="font-semibold text-primary">
                 {selectedMethod === "checkbox" ? "Checkbox" : "Score"} Evaluation
               </span>. 
-              This choice will determine your judging interface and cannot be changed later.
+              This choice will determine your judging interface and <span className="font-bold underline">cannot be changed later</span>.
             </p>
             
             <div className="p-4 mb-6 border border-gray-200 bg-gray-50 rounded-lg">

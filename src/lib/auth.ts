@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import pool from "./db";
 
-
 type Judge = {
   id: string;
   name: string;
+  evaluationMethod?: "checkbox" | "scoring" | null;
 };
 
 /**
@@ -12,17 +12,11 @@ type Judge = {
  * @param pin Six-digit PIN code
  * @returns Judge object if authenticated, null otherwise
  */
-/**
- * Authenticate a judge with their PIN
- * @param pin Six-digit PIN code
- * @returns Judge object if authenticated, null otherwise
- */
-// Update the authenticateJudge function to use the new Jury table
 export async function authenticateJudge(pin: string): Promise<Judge | null> {
   try {
-    // Query the dedicated Jury table instead of User table
+    // Query the dedicated Jury table including evaluationMethod
     const [rows] = await pool.query(
-      `SELECT id, fullName FROM Jury WHERE pin = ? AND isActive = 1`,
+      `SELECT id, fullName, evaluationMethod FROM Jury WHERE pin = ? AND isActive = 1`,
       [pin]
     );
     
@@ -46,9 +40,21 @@ export async function authenticateJudge(pin: string): Promise<Judge | null> {
         sameSite: "strict"
       });
       
+      // If judge already has an evaluation method set, store it in cookies too
+      if (judge.evaluationMethod) {
+        cookieStore.set("evaluation_method", judge.evaluationMethod, {
+          path: "/",
+          maxAge: 60 * 60 * 24, // 1 day
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict"
+        });
+      }
+      
       return {
         id: judge.id,
-        name: judge.fullName
+        name: judge.fullName,
+        evaluationMethod: judge.evaluationMethod || null
       };
     }
     
@@ -59,21 +65,55 @@ export async function authenticateJudge(pin: string): Promise<Judge | null> {
   }
 }
 
-
 /**
  * Set the evaluation method chosen by the judge
  * @param method "checkbox" or "scoring"
+ * @param judgeId The ID of the judge
  */
-export function setEvaluationMethod(method: "checkbox" | "scoring"): void {
-  const cookieStore = cookies();
-  
-  cookieStore.set("evaluation_method", method, {
-    path: "/",
-    maxAge: 60 * 60 * 24, // 1 day
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict"
-  });
+export async function setEvaluationMethod(method: "checkbox" | "scoring", judgeId?: string): Promise<boolean> {
+  try {
+    const cookieStore = cookies();
+    
+    // Set the cookie regardless of database update
+    cookieStore.set("evaluation_method", method, {
+      path: "/",
+      maxAge: 60 * 60 * 24, // 1 day
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict"
+    });
+    
+    // If no judgeId provided, try to get from session
+    if (!judgeId) {
+      const judge = getCurrentJudge();
+      if (!judge) return false;
+      judgeId = judge.id;
+    }
+    
+    // First check if the judge already has an evaluation method set
+    const [existingRows] = await pool.query(
+      `SELECT evaluationMethod FROM Jury WHERE id = ?`,
+      [judgeId]
+    );
+    
+    const judges = existingRows as any[];
+    
+    // If judge already has a method set, don't update it
+    if (judges.length > 0 && judges[0].evaluationMethod) {
+      return true; // Return true because we're using the existing method
+    }
+    
+    // Update the judge's evaluation method in the database
+    await pool.query(
+      `UPDATE Jury SET evaluationMethod = ? WHERE id = ?`,
+      [method, judgeId]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error("Error setting evaluation method:", error);
+    return false;
+  }
 }
 
 /**
@@ -99,6 +139,34 @@ export function getCurrentJudge(): Judge | null {
   }
   
   return null;
+}
+
+/**
+ * Get the judge's evaluation method directly from the database
+ * @param judgeId The ID of the judge
+ * @returns "checkbox" or "scoring" or null if not set
+ */
+export async function getJudgeEvaluationMethodFromDB(judgeId: string): Promise<"checkbox" | "scoring" | null> {
+  try {
+    const [rows] = await pool.query(
+      `SELECT evaluationMethod FROM Jury WHERE id = ?`,
+      [judgeId]
+    );
+    
+    const judges = rows as any[];
+    
+    if (judges.length > 0 && judges[0].evaluationMethod) {
+      const method = judges[0].evaluationMethod;
+      if (method === "checkbox" || method === "scoring") {
+        return method;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error getting evaluation method:", error);
+    return null;
+  }
 }
 
 /**
