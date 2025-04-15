@@ -3,7 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
+import { 
+  ChevronLeft, 
+  CheckSquare, 
+  FileText, 
+  Edit, 
+  Trash, 
+  AlertCircle, 
+  Check, 
+  Clock,
+  ArrowRight,
+  ExternalLink
+} from "lucide-react";
 
 // Types for our submission data
 interface Submission {
@@ -64,6 +77,31 @@ export default function ReviewSelectionsPage() {
     
     fetchSelectedSubmissions();
   }, []);
+  
+  // Check if user is authenticated
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+        
+        if (!response.ok) {
+          // Not authenticated, redirect to login
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        router.push('/login');
+      }
+    }
+    
+    checkAuth();
+  }, [router]);
   
   const handleRemoveSubmission = async (submissionId: string) => {
     try {
@@ -163,33 +201,31 @@ export default function ReviewSelectionsPage() {
   // If finalization is complete, show completion screen
   if (finalizeComplete) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check className="h-8 w-8 text-green-600" />
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
             Selections Finalized!
           </h1>
           
-          <p className="text-gray-600 dark:text-gray-400 mb-8">
+          <p className="text-gray-600 mb-8">
             Thank you for completing your judging. Your selections have been submitted successfully.
           </p>
           
           <div className="flex flex-col space-y-4">
             <button
               onClick={() => router.push("/submissions")}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200"
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white font-medium rounded-md transition-colors shadow-sm"
             >
               Back to Submissions
             </button>
             
             <button
               onClick={() => router.push("/")}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-200"
+              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-gray-700"
             >
               Return to Home
             </button>
@@ -200,26 +236,34 @@ export default function ReviewSelectionsPage() {
   }
   
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="bg-white shadow-sm z-30 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">
-                Review Your Selections
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                You have selected {selectedSubmissions.length} of {MAX_EVALUATIONS} maximum submissions
-              </p>
-            </div>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/submissions")}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-200"
+              <Link 
+                href="/submissions" 
+                className="flex items-center gap-1 text-black bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-primary hover:text-white transition-colors shadow-sm"
               >
-                Back to Submissions
-              </button>
+                <ChevronLeft className="h-5 w-5" />
+                <span className="font-medium">Back</span>
+              </Link>
+              
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Review Selections
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-md bg-primary/10 text-primary">
+                {evaluationMethod === "checkbox" ? "Selection Mode" : "Scoring Mode"}
+              </span>
+              
+              <span className="hidden sm:inline-block text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
+                {selectedSubmissions.length}/{MAX_EVALUATIONS}
+              </span>
+              
               <LogoutButton />
             </div>
           </div>
@@ -227,177 +271,203 @@ export default function ReviewSelectionsPage() {
       </header>
       
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg text-gray-600 dark:text-gray-400">Loading your selections...</div>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Your Selected Submissions
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Review and finalize your selections before submitting
-                </p>
+      <div className="flex-1 overflow-auto bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto">
+          {isLoading ? (
+            <div className="bg-white p-8 rounded-lg shadow-md">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
               </div>
-              
-              <button
-                onClick={() => setShowConfirmModal(true)}
-                disabled={selectedSubmissions.length === 0}
-                className={`px-4 py-2 rounded-md transition duration-200 ${
-                  selectedSubmissions.length === 0
-                    ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                    : "bg-green-600 hover:bg-green-700 text-white"
-                }`}
-              >
-                Finalize Selections
-              </button>
+              <p className="text-center mt-4 text-gray-600">Loading your selections...</p>
             </div>
-            
-            {errorMessage && (
-              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 dark:bg-red-900/30 dark:text-red-400">
-                <p>{errorMessage}</p>
-              </div>
-            )}
-            
-            {successMessage && (
-              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 dark:bg-green-900/30 dark:text-green-400">
-                <p>{successMessage}</p>
-              </div>
-            )}
-            
-            {selectedSubmissions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Submission
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        ID
-                      </th>
-                      {evaluationMethod === "scoring" && (
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Average Score
-                        </th>
-                      )}
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                    {selectedSubmissions.map((submission) => (
-                      <tr key={submission.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {submission.title.length > 40
-                                  ? submission.title.substring(0, 40) + "..."
-                                  : submission.title}
-                              </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(submission.submittedAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                            {submission.categoryName}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {submission.submissionId}
-                        </td>
-                        {evaluationMethod === "scoring" && (
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                              {renderScoreAverage(submission.scores)}
-                            </span>
-                          </td>
-                        )}
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleEditSubmission(submission.id)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleRemoveSubmission(submission.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="p-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                  You haven't selected any submissions yet
-                </p>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Your Selected Submissions
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Review and finalize your selections before submitting
+                  </p>
+                </div>
+                
                 <button
-                  onClick={() => router.push("/submissions")}
-                  className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200"
+                  onClick={() => setShowConfirmModal(true)}
+                  disabled={selectedSubmissions.length === 0}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    selectedSubmissions.length === 0
+                      ? "bg-gray-200 cursor-not-allowed text-gray-400"
+                      : "bg-primary hover:bg-primary/90 text-white"
+                  }`}
                 >
-                  Browse Submissions
+                  Finalize Selections
                 </button>
               </div>
-            )}
-          </div>
-        )}
-      </main>
+              
+              {errorMessage && (
+                <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-600 flex items-start">
+                  <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                  <p>{errorMessage}</p>
+                </div>
+              )}
+              
+              {successMessage && (
+                <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-600 flex items-start">
+                  <Check className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                  <p>{successMessage}</p>
+                </div>
+              )}
+              
+              {selectedSubmissions.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Submission
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ID
+                        </th>
+                        {evaluationMethod === "scoring" && (
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Average Score
+                          </th>
+                        )}
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedSubmissions.map((submission) => (
+                        <tr key={submission.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 mr-3">
+                                <FileText className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {submission.title.length > 40
+                                    ? submission.title.substring(0, 40) + "..."
+                                    : submission.title}
+                                </div>
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {new Date(submission.submittedAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                              {submission.categoryName}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {submission.submissionId.substring(0, 10)}...
+                          </td>
+                          {evaluationMethod === "scoring" && (
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary">
+                                {renderScoreAverage(submission.scores)}
+                              </span>
+                            </td>
+                          )}
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button
+                              onClick={() => handleEditSubmission(submission.id)}
+                              className="p-1 text-gray-600 hover:text-primary mr-2"
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleRemoveSubmission(submission.id)}
+                              className="p-1 text-gray-600 hover:text-red-500"
+                              title="Remove"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <div className="p-4 bg-primary/10 inline-block rounded-full mb-4">
+                    <FileText className="h-10 w-10 text-primary" />
+                  </div>
+                  <p className="text-lg text-gray-600 mb-4">
+                    You haven't selected any submissions yet
+                  </p>
+                  <button
+                    onClick={() => router.push("/submissions")}
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-white font-medium rounded-md transition-colors inline-flex items-center gap-2"
+                  >
+                    <span>Browse Submissions</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
       
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-foreground">Finalize Your Selections</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl border border-gray-200">
+            <h3 className="text-xl font-bold mb-4 text-gray-900">Finalize Your Selections</h3>
+            <p className="text-gray-600 mb-6">
               Are you sure you want to finalize your selections? This action cannot be undone.
             </p>
             {selectedSubmissions.length < MAX_EVALUATIONS && (
-              <div className="mb-6 p-3 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-md">
-                <p className="text-sm">
-                  <strong>Note:</strong> You have selected {selectedSubmissions.length} of {MAX_EVALUATIONS} possible submissions.
-                  Are you sure you don't want to use all your available selections?
-                </p>
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5 text-amber-500" />
+                <div>
+                  <p className="text-sm font-medium">
+                    You have selected {selectedSubmissions.length} of {MAX_EVALUATIONS} possible submissions.
+                  </p>
+                  <p className="text-sm">
+                    Are you sure you don't want to use all your available selections?
+                  </p>
+                </div>
               </div>
             )}
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowConfirmModal(false)}
                 disabled={isSubmitting}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-200"
+                className="px-4 py-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-700"
               >
                 Cancel
               </button>
               <button
                 onClick={handleFinalizeSelections}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md transition duration-200 ${
+                className={`px-4 py-2 rounded-md transition-colors ${
                   isSubmitting 
-                    ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                    : "bg-green-600 hover:bg-green-700 text-white"
+                    ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                    : "bg-primary hover:bg-primary/90 text-white"
                 }`}
               >
-                {isSubmitting ? "Processing..." : "Confirm & Finalize"}
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Processing...
+                  </span>
+                ) : (
+                  "Confirm & Finalize"
+                )}
               </button>
             </div>
           </div>
