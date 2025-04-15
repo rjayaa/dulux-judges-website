@@ -159,17 +159,17 @@ const PinLogin: React.FC<PinLoginProps> = ({ onLogin }) => {
       </button>
       
       <div className="mt-8 border-t border-gray-200 pt-4 text-center text-sm text-gray-500">
-        {/* <p>Demo PINs: 123456, 654321, 111111</p> */}
         <p className="mt-2">If you forgot your PIN, please contact the administrator</p>
       </div>
       
-      <div className="mt-6 flex justify-center">
+      <div className="mt-8 flex justify-center"> {/* Increased top margin */}
         <Image
           src="/favicon.ico"
           alt="Logo"
-          width={50}
-          height={50}
-          className="h-10 w-auto"
+          width={100}  
+          height={100} 
+          className="h-20 w-auto"
+          priority
         />
       </div>
     </div>

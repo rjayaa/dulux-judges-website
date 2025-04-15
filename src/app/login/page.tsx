@@ -124,21 +124,21 @@ export default function LoginPage() {
         
         {/* Centered Judging System content */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4/5 max-w-2xl">
-            <div className="bg-white bg-opacity-15 backdrop-blur-md p-8 rounded-xl border border-white border-opacity-20 text-white">
-              <h3 className="text-3xl font-bold mb-5 tracking-wide">Judging System</h3>
-              <p className="text-lg mb-6 leading-relaxed">
+          <div className="w-4/5 max-w-3xl"> {/* Increased max-width */}
+            <div className="bg-white bg-opacity-15 backdrop-blur-md p-12 rounded-xl border border-white border-opacity-20 text-white"> {/* Increased padding */}
+              <h3 className="text-4xl font-bold mb-6 tracking-wide">Judging System</h3> {/* Increased text size */}
+              <p className="text-xl mb-8 leading-relaxed"> {/* Increased text size and margin */}
                 Evaluate design submissions with our intuitive platform, designed for efficiency and accuracy.
               </p>
               
-              <div className="p-5 bg-white/10 rounded-lg border border-white/15">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+              <div className="p-6 bg-white/10 rounded-lg border border-white/15"> {/* Increased padding */}
+                <div className="flex items-center space-x-6"> {/* Increased spacing */}
+                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-2xl flex-shrink-0"> {/* Increased size */}
                     ?
                   </div>
                   <div>
-                    <p className="font-medium mb-1">Need help?</p>
-                    <p className="text-sm text-white/90">
+                    <p className="font-medium mb-2 text-lg">Need help?</p> {/* Increased text size */}
+                    <p className="text-base text-white/90"> {/* Increased text size */}
                       Contact the administrator for assistance with your judging account.
                     </p>
                   </div>
