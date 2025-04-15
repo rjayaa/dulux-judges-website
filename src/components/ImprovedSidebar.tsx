@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, X, Filter, FileText, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
-// This is the simplified improved sidebar component
+// Improved sidebar component with pagination at the top
 const ImprovedSidebar = ({ 
   submissions, 
   selectedSubmission, 
@@ -14,7 +14,7 @@ const ImprovedSidebar = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("compact"); // compact, detailed
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 10;
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -70,6 +70,13 @@ const ImprovedSidebar = ({
     setFilterCategory("all");
   };
 
+  // Quick page navigation
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="bg-white h-full flex flex-col">
       {/* Search bar */}
@@ -94,7 +101,7 @@ const ImprovedSidebar = ({
         </div>
       </div>
 
-      {/* View mode toggle */}
+      {/* View mode toggle and info */}
       <div className="px-4 pt-2 pb-3 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between">
           {/* View Mode Toggle */}
@@ -131,6 +138,80 @@ const ImprovedSidebar = ({
           </div>
         )}
       </div>
+
+      {/* Pagination - Now at the top, before the list */}
+      {totalPages > 1 && (
+        <div className="p-3 border-b border-gray-200 bg-primary/5">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-black cursor-not-allowed' 
+                  : 'bg-white text-gray-800 hover:bg-primary/20 shadow-sm border border-gray-300'
+              }`}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center">
+              <span className="font-medium text-gray-700">Page</span>
+              <div className="mx-2 px-3 py-1 bg-white border border-gray-300 text-black rounded-md shadow-sm text-center min-w-[40px]">
+                {currentPage}
+              </div>
+              <span className="text-gray-600">of {totalPages}</span>
+            </div>
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-800 hover:bg-primary/20 shadow-sm border border-gray-300'
+              }`}
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+          
+          {/* Page jump buttons for easy navigation */}
+          {totalPages > 3 && (
+            <div className="flex justify-center mt-2 gap-1">
+              {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                // Calculate which page numbers to show
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = idx + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = idx + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + idx;
+                } else {
+                  pageNum = currentPage - 2 + idx;
+                }
+                
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => goToPage(pageNum)}
+                    className={`w-7 h-7 text-xs rounded-md ${
+                      currentPage === pageNum
+                        ? 'bg-primary text-white font-bold'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* List of submissions */}
       <div className="flex-1 overflow-auto">
@@ -250,39 +331,6 @@ const ImprovedSidebar = ({
           </div>
         )}
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="p-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-          <button
-            onClick={prevPage}
-            disabled={currentPage === 1}
-            className={`p-1.5 rounded-md ${
-              currentPage === 1 
-                ? 'text-gray-300 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          
-          <button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            className={`p-1.5 rounded-md ${
-              currentPage === totalPages 
-                ? 'text-gray-300 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };

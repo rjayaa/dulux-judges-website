@@ -95,14 +95,14 @@ export default function LoginPage() {
               <PinLogin onLogin={handleLoginSuccess} />
               
               {/* Add forgotten PIN option */}
-              <div className="mt-6 text-center">
+              {/* <div className="mt-6 text-center">
                 <button 
                   className="text-primary hover:text-primary/80 text-sm font-medium hover:underline"
                   onClick={() => setError('Please contact an administrator to reset your PIN.')}
                 >
                   Forgotten your PIN?
                 </button>
-              </div>
+              </div> */}
             </>
           )}
         </div>
