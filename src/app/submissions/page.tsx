@@ -56,9 +56,9 @@ interface Submission {
 
 // Mock categories
 const mockCategories = [
-  { id: "cm7woadi6000tyzjp90iwliel", name: "Interior Design" },
-  { id: "cm6v78vcu000ai0hyozdkfukr", name: "Architecture" },
-  { id: "cm7woc3qw000uyzjpvbv4gy2x", name: "Product Design" },
+  // { id: "cm7woadi6000tyzjp90iwliel", name: "City Project" },
+  
+  
 ];
 
 export default function SubmissionsPage() {
@@ -114,7 +114,8 @@ export default function SubmissionsPage() {
             const category = mockCategories.find(cat => cat.id === sub.categoryId);
             return {
               ...sub,
-              categoryName: category ? category.name : 'Uncategorized'
+              // categoryName: category ? category.name : 'Uncategorized'
+              categoryName:  'City Project'
             };
           });
           
@@ -821,7 +822,7 @@ export default function SubmissionsPage() {
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
               >
-                <option value="all">All Categories</option>
+                <option value="all">City Project</option>
                 {mockCategories.map(category => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -886,7 +887,7 @@ export default function SubmissionsPage() {
                       <div className="text-xs text-gray-500 flex items-center gap-1">
                         <span>{submission.categoryName}</span>
                         <span>•</span>
-                        <span className="truncate">ID: {submission.submissionId.substring(0, 8)}</span>
+                        <span className="truncate">ID: {submission.submissionId}</span>
                       </div>
                     </div>
                     {submission.evaluated && (
@@ -927,8 +928,8 @@ export default function SubmissionsPage() {
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex flex-wrap justify-between items-start gap-3 mb-2">
                     <h2 className="text-xl font-bold text-gray-900">{selectedSubmission.title}</h2>
-                    <div className="px-3 py-1 bg-gray-100 rounded-md text-sm text-gray-700">
-                      ID: <span className="font-medium">{selectedSubmission.submissionId.substring(0, 10)}...</span>
+                                       <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm">
+                      ID: <span className="font-medium">{selectedSubmission.submissionId}</span>
                     </div>
                   </div>
                 

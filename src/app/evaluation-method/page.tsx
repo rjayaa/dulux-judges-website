@@ -114,13 +114,13 @@ export default function EvaluationMethodPage() {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <Link 
+              {/* <Link 
                 href="/login" 
                 className="flex items-center gap-1 text-black bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-primary hover:text-white transition-colors shadow-sm"
               >
                 <ChevronLeft className="h-5 w-5" />
                 <span className="font-medium">Back</span>
-              </Link>
+              </Link> */}
               
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 Evaluation Method

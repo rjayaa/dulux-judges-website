@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     // Base query for submissions
     let submissionsQuery = `
       SELECT s.*, c.name as categoryName
-      FROM Submission s
+      FROM SubmissionValid s
       JOIN Category c ON s.categoryId = c.id
       WHERE s.status = 'SUBMITTED' AND s.isActive = 1
     `;

@@ -1,14 +1,6 @@
 import { cookies } from "next/headers";
 import pool from "./db";
-// In a real application, this would connect to your database
-// This is a simple mock implementation for demonstration purposes
 
-// Example predefined PINs for judges
-const JUDGE_PINS = {
-  "123456": { id: "j1", name: "Judge One" },
-  "654321": { id: "j2", name: "Judge Two" },
-  "111111": { id: "j3", name: "Judge Three" },
-};
 
 type Judge = {
   id: string;
