@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-
+import pool from "./db";
 // In a real application, this would connect to your database
 // This is a simple mock implementation for demonstration purposes
 
@@ -20,37 +20,53 @@ type Judge = {
  * @param pin Six-digit PIN code
  * @returns Judge object if authenticated, null otherwise
  */
+/**
+ * Authenticate a judge with their PIN
+ * @param pin Six-digit PIN code
+ * @returns Judge object if authenticated, null otherwise
+ */
+// Update the authenticateJudge function to use the new Jury table
 export async function authenticateJudge(pin: string): Promise<Judge | null> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Check if PIN exists in our mock database
-  if (pin in JUDGE_PINS) {
-    const judge = JUDGE_PINS[pin as keyof typeof JUDGE_PINS];
+  try {
+    // Query the dedicated Jury table instead of User table
+    const [rows] = await pool.query(
+      `SELECT id, fullName FROM Jury WHERE pin = ? AND isActive = 1`,
+      [pin]
+    );
     
-    // In a real app, you'd set a secure HTTP-only cookie with proper expiration
-    // For demo purposes, we'll just set a simple cookie
-    const cookieStore = cookies();
+    const judges = rows as any[];
     
-    // Set a cookie with judge info (in a real app, use JWT or session ID)
-    cookieStore.set("judge_session", JSON.stringify({
-      id: judge.id,
-      name: judge.name,
-      authenticated: true,
-      timestamp: Date.now()
-    }), {
-      path: "/",
-      maxAge: 60 * 60 * 24, // 1 day
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict"
-    });
+    if (judges.length > 0) {
+      const judge = judges[0];
+      
+      const cookieStore = cookies();
+      
+      cookieStore.set("judge_session", JSON.stringify({
+        id: judge.id,
+        name: judge.fullName,
+        authenticated: true,
+        timestamp: Date.now()
+      }), {
+        path: "/",
+        maxAge: 60 * 60 * 24, // 1 day
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict"
+      });
+      
+      return {
+        id: judge.id,
+        name: judge.fullName
+      };
+    }
     
-    return judge;
+    return null;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    return null;
   }
-  
-  return null;
 }
+
 
 /**
  * Set the evaluation method chosen by the judge

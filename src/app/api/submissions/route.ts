@@ -1,68 +1,7 @@
+// src/app/api/submissions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentJudge } from "@/lib/auth";
-
-// Mock data for submissions
-const mockSubmissions = [
-  {
-    id: "m99olqca000jyz3dwokh7ehn",
-    title: "Tetap Bergerak menuju arah yang lebih baik",
-    description: "Desain bertema \"Movement\" mencerminkan dinamika ini: garis melengkung, pencahayaan yang berubah, dan ruang yang mengalir, menjadi simbol adaptasi dan transformasi. Di saat stagnasi bukan pilihan, ruang ini mengajak kita untuk terus bergerak, berinovasi, dan menemukan harmoni di tengah perubahan. Dalam desain ini, gerak adalah harapan. Refleksi dari dunia yang hidup, tangguh, dan selalu menuju masa depan.",
-    status: "SUBMITTED",
-    submittedAt: "2025-04-09 08:42:51",
-    categoryId: "cm7woadi6000tyzjp90iwliel",
-    categoryName: "Interior Design",
-    submissionId: "SBM-0700003",
-    submissionType: "INDIVIDUAL",
-    submissionFile: "https://st01.nos.wjv-1.neo.id/submissionFile/a59cf3ef45479239581f2c64ab3851d9.pdf",
-    submissionFiles: [
-      "https://st01.nos.wjv-1.neo.id/submissionFile/7795fe0ed55a9eed8952c3810f340022.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/ccb848001f1e8bb510e8f9f91be71031.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/b50cc1147c81790f1ca9ad87e6e5f18d.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/7d7b2a0fcd6058d46695023b4ce4a7ab.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/33a9227ad06c95893962409278d5439d.pdf"
-    ]
-  },
-  {
-    id: "n72plqca000jyz3dwokh8xyz",
-    title: "Urban Flow: Connecting Spaces",
-    description: "This design explores the concept of movement through urban landscapes. By creating interconnected spaces that flow seamlessly from public to private realms, the project addresses the need for dynamic yet cohesive environments in modern cities. Materials transition from transparent to opaque, guiding movement while maintaining visual connections.",
-    status: "SUBMITTED",
-    submittedAt: "2025-04-10 14:23:10",
-    categoryId: "cm6v78vcu000ai0hyozdkfukr",
-    categoryName: "Architecture",
-    submissionId: "SBM-0700004",
-    submissionType: "INDIVIDUAL",
-    submissionFile: "https://st01.nos.wjv-1.neo.id/submissionFile/a59cf3ef45479239581f2c64ab3851d9.pdf",
-    submissionFiles: [
-      "https://st01.nos.wjv-1.neo.id/submissionFile/7795fe0ed55a9eed8952c3810f340022.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/ccb848001f1e8bb510e8f9f91be71031.pdf"
-    ]
-  },
-  {
-    id: "k45plqca000jyz3dwokh8abc",
-    title: "Fluid Forms: Product Design Evolution",
-    description: "Inspired by natural water movements, this product design series showcases how everyday objects can embody the grace of flowing water. Each piece transforms from static to dynamic through user interaction, creating an evolving experience that adapts to human behavior and needs.",
-    status: "SUBMITTED",
-    submittedAt: "2025-04-11 09:15:22",
-    categoryId: "cm7woc3qw000uyzjpvbv4gy2x",
-    categoryName: "Product Design",
-    submissionId: "SBM-0700005",
-    submissionType: "INDIVIDUAL",
-    submissionFile: "https://st01.nos.wjv-1.neo.id/submissionFile/a59cf3ef45479239581f2c64ab3851d9.pdf",
-    submissionFiles: [
-      "https://st01.nos.wjv-1.neo.id/submissionFile/7795fe0ed55a9eed8952c3810f340022.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/ccb848001f1e8bb510e8f9f91be71031.pdf",
-      "https://st01.nos.wjv-1.neo.id/submissionFile/b50cc1147c81790f1ca9ad87e6e5f18d.pdf"
-    ]
-  }
-];
-
-// Mock categories
-const mockCategories = [
-  { id: "cm7woadi6000tyzjp90iwliel", name: "Interior Design" },
-  { id: "cm6v78vcu000ai0hyozdkfukr", name: "Architecture" },
-  { id: "cm7woc3qw000uyzjpvbv4gy2x", name: "Product Design" },
-];
+import pool from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,18 +19,72 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const categoryId = searchParams.get("categoryId");
     
-    // Filter submissions by category if provided
-    let submissions = [...mockSubmissions];
+    // Base query for submissions
+    let submissionsQuery = `
+      SELECT s.*, c.name as categoryName
+      FROM Submission s
+      JOIN Category c ON s.categoryId = c.id
+      WHERE s.status = 'SUBMITTED' AND s.isActive = 1
+    `;
     
+    const queryParams: any[] = [];
+    
+    // Add category filter if provided
     if (categoryId && categoryId !== "all") {
-      submissions = submissions.filter(sub => sub.categoryId === categoryId);
+      submissionsQuery += " AND s.categoryId = ?";
+      queryParams.push(categoryId);
     }
+    
+    submissionsQuery += " ORDER BY s.createdAt DESC";
+    
+    // Execute query
+    const [submissions] = await pool.query(submissionsQuery, queryParams);
+    
+    // Get evaluations by this judge
+    const [evaluations] = await pool.query(
+      `SELECT * FROM JuryEvaluation WHERE juryId = ?`,
+      [judge.id]
+    );
+    
+    // Convert to expected format
+    const submissionsWithEvaluations = (submissions as any[]).map(submission => {
+      const evaluation = (evaluations as any[]).find(e => e.submissionId === submission.id);
+      
+      return {
+        id: submission.id,
+        title: submission.title,
+        description: submission.description || "",
+        status: submission.status,
+        submittedAt: submission.createdAt.toString(),
+        categoryId: submission.categoryId,
+        categoryName: submission.categoryName,
+        submissionId: submission.submissionId || "",
+        submissionType: submission.submissionType || "INDIVIDUAL",
+        submissionFile: submission.submissionFile,
+        submissionFiles: submission.submissionFiles ? JSON.parse(submission.submissionFiles) : [],
+        evaluated: !!evaluation,
+        comment: evaluation?.comments || "",
+        ...(evaluation?.evaluationMethod === "scoring" ? {
+          scores: {
+            score1: evaluation.score1?.toString() || "",
+            score2: evaluation.score2?.toString() || "",
+            score3: evaluation.score3?.toString() || "",
+            score4: evaluation.score4?.toString() || ""
+          }
+        } : {})
+      };
+    });
+    
+    // Get all active categories
+    const [categories] = await pool.query(
+      `SELECT id, name FROM Category WHERE isActive = 1`
+    );
     
     // Return submissions with categories
     return NextResponse.json({ 
       success: true, 
-      submissions,
-      categories: mockCategories
+      submissions: submissionsWithEvaluations,
+      categories
     });
     
   } catch (error) {
@@ -120,8 +113,91 @@ export async function POST(request: NextRequest) {
     
     // Handle submission evaluation
     if (data.action === "evaluate" && data.submissionId) {
-      // In a real app, save the evaluation to database
-      // For now, just return success
+      // Check if evaluation already exists
+      const [existingEvaluations] = await pool.query(
+        `SELECT * FROM JuryEvaluation WHERE juryId = ? AND submissionId = ?`,
+        [judge.id, data.submissionId]
+      );
+      
+      const existingEvaluation = (existingEvaluations as any[])[0];
+      
+      if (data.remove) {
+        // Remove evaluation if it exists
+        if (existingEvaluation) {
+          await pool.query(
+            `DELETE FROM JuryEvaluation WHERE id = ?`,
+            [existingEvaluation.id]
+          );
+        }
+      } else if (existingEvaluation) {
+        // Update existing evaluation
+        let updateQuery = `
+          UPDATE JuryEvaluation SET
+          evaluationMethod = ?,
+          selected = ?,
+          comments = ?,
+          updatedAt = NOW()
+        `;
+        
+        const params = [
+          data.method,
+          data.selected ? 1 : 0,
+          data.comments || null
+        ];
+        
+        // Add score fields if scoring method
+        if (data.method === "scoring") {
+          updateQuery += `, score1 = ?, score2 = ?, score3 = ?, score4 = ?`;
+          params.push(
+            data.scores?.score1 ? parseInt(data.scores.score1) : null,
+            data.scores?.score2 ? parseInt(data.scores.score2) : null,
+            data.scores?.score3 ? parseInt(data.scores.score3) : null,
+            data.scores?.score4 ? parseInt(data.scores.score4) : null
+          );
+        }
+        
+        updateQuery += ` WHERE id = ?`;
+        params.push(existingEvaluation.id);
+        
+        await pool.query(updateQuery, params);
+      } else {
+        // Create new evaluation
+        const evaluationId = `eval_${Date.now()}`;
+        
+        let insertQuery = `
+          INSERT INTO JuryEvaluation (
+            id, juryId, submissionId, evaluationMethod, 
+            selected, comments
+        `;
+        
+        let placeholders = `?, ?, ?, ?, ?, ?`;
+        
+        const params = [
+          evaluationId,
+          judge.id,
+          data.submissionId,
+          data.method,
+          data.selected ? 1 : 0,
+          data.comments || null
+        ];
+        
+        // Add score fields if scoring method
+        if (data.method === "scoring") {
+          insertQuery += `, score1, score2, score3, score4`;
+          placeholders += `, ?, ?, ?, ?`;
+          
+          params.push(
+            data.scores?.score1 ? parseInt(data.scores.score1) : null,
+            data.scores?.score2 ? parseInt(data.scores.score2) : null,
+            data.scores?.score3 ? parseInt(data.scores.score3) : null,
+            data.scores?.score4 ? parseInt(data.scores.score4) : null
+          );
+        }
+        
+        insertQuery += `) VALUES (${placeholders})`;
+        
+        await pool.query(insertQuery, params);
+      }
       
       return NextResponse.json({ 
         success: true, 

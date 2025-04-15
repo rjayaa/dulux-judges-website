@@ -1,5 +1,7 @@
+// src/app/api/submissions/finalize/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentJudge, getEvaluationMethod } from "@/lib/auth";
+import pool from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,11 +44,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // In a real app, you would save the finalized submissions to the database
-    // and mark them as final so they can't be changed
+    // Mark evaluations as finalized using placeholders for each ID
+    const placeholders = data.submissions.map(() => '?').join(',');
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await pool.query(`
+      UPDATE JuryEvaluation 
+      SET isFinalized = 1 
+      WHERE juryId = ? AND submissionId IN (${placeholders})
+    `, [judge.id, ...data.submissions]);
     
     // Return success
     return NextResponse.json({ 
