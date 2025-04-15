@@ -29,6 +29,7 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import ImprovedSidebar from "@/components/ImprovedSidebar";
 
 // Types for our submission data
 type SubmissionFile = string;
@@ -781,136 +782,18 @@ export default function SubmissionsPage() {
       {/* Main Content - Google Drive-inspired layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - Collapsible on mobile */}
-        <div className={`bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-full sm:w-72 lg:w-80'
-          }`}>
-          <div className="p-4">
-            {/* Search and filters */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search submissions..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          
-            {/* <div className="mb-4">
-              <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <select
-                id="category-filter"
-                className="block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-              >
-                <option value="all">City Project</option>
-                {mockCategories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
-          
-            {/* Submission list - Similar to Google Drive's file list */}
-            <div className="text-sm font-medium text-gray-700 flex justify-between items-center mb-2">
-              <span>{filteredSubmissions.length} submissions</span>
-              {totalPages > 1 && (
-                <div className="flex items-center gap-1 text-xs">
-                  <button
-                    onClick={prevPage}
-                    disabled={currentPage === 1}
-                    className={`p-1 rounded ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span>Page {currentPage}/{totalPages}</span>
-                  <button
-                    onClick={nextPage}
-                    disabled={currentPage === totalPages}
-                    className={`p-1 rounded ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-          
-            <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-220px)]">
-              {isLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
-              ) : paginatedSubmissions.length > 0 ? (
-                paginatedSubmissions.map(submission => (
-                  <div
-                    key={submission.id}
-                    className={`p-2 rounded-md cursor-pointer transition-colors flex items-center ${selectedSubmission?.id === submission.id
-                        ? "bg-primary/10 text-primary border-l-4 border-primary pl-2"
-                        : submission.evaluated
-                          ? "hover:bg-gray-100 border-l-4 border-green-500 pl-2"
-                          : "hover:bg-gray-100"
-                      }`}
-                    onClick={() => handleSelectSubmission(submission)}
-                  >
-                    <div className="mr-3 flex-shrink-0">
-                      <FileText className={`h-5 w-5 ${selectedSubmission?.id === submission.id
-                          ? "text-primary"
-                          : submission.evaluated
-                            ? "text-green-500"
-                            : "text-gray-500"
-                        }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">
-                        {submission.title}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1">
-                        <span>{submission.categoryName}</span>
-                        <span>•</span>
-                        <span className="truncate">ID: {submission.submissionId}</span>
-                      </div>
-                    </div>
-                    {submission.evaluated && (
-                      <span className="ml-2 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3 h-3" />
-                      </span>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <Filter className="mx-auto h-8 w-8 mb-2" />
-                  <p>No submissions found</p>
-                  {(searchQuery || filterCategory !== "all") && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        setFilterCategory("all");
-                      }}
-                      className="mt-2 text-primary text-sm font-medium"
-                    >
-                      Clear filters
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <div className={`bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 ${
+  sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-full sm:w-72 lg:w-80'
+}`}>
+  <ImprovedSidebar
+    submissions={submissions}
+    selectedSubmission={selectedSubmission}
+    onSelectSubmission={handleSelectSubmission}
+    isLoading={isLoading}
+    filterCategory={filterCategory}
+    setFilterCategory={setFilterCategory}
+  />
+</div>
       
         {/* Main content area - Preview and evaluation */}
         <div className="flex-1 overflow-auto bg-gray-50 p-4">
