@@ -30,6 +30,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import ImprovedSidebar from "@/components/ImprovedSidebar";
+import JuryGreeting from "@/components/JuryGreeting";
 
 // Types for our submission data
 type SubmissionFile = string;
@@ -956,7 +957,8 @@ export default function SubmissionsPage() {
         {/* Main content area - Preview and evaluation */}
         <div className="flex-1 overflow-auto bg-gray-50 p-4">
           {selectedSubmission ? (
-            <div className="max-w-4xl mx-auto">
+                      <div className="max-w-4xl mx-auto">
+                          <JuryGreeting />
               {/* File preview with navigation and detailed information */}
               <div className="mb-4 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {/* Header with submission title and ID */}
