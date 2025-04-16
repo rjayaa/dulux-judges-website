@@ -583,87 +583,159 @@ export default function SubmissionsPage() {
             </span>
           </div>
           
-         // Updated scoring section for renderEvaluationForm function in src/app/submissions/submissionsContent.tsx
 
-// Replace the existing grid layout with these updated criteria
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-  <div>
-    <label htmlFor="score1" className="block text-sm font-medium text-gray-700 mb-1">
-      Konten Desain / Design Content (40%)
-    </label>
-    <input
-      type="number"
-      id="score1"
-      min="1"
-      max="10"
-      value={scores.score1}
-      onChange={(e) => setScores({ ...scores, score1: e.target.value })}
-      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-    />
-    <p className="text-xs text-gray-500 mt-1">Penilaian aspek lokalitas, modern, bangunan hijau, dll.</p>
-  </div>
-  <div>
-    <label htmlFor="score2" className="block text-sm font-medium text-gray-700 mb-1">
-      Aplikasi Warna / Color Application (30%)
-    </label>
-    <input
-      type="number"
-      id="score2"
-      min="1"
-      max="10"
-      value={scores.score2}
-      onChange={(e) => setScores({ ...scores, score2: e.target.value })}
-      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-    />
-    <p className="text-xs text-gray-500 mt-1">Penggunaan True Joys dan kombinasi palet warna</p>
-  </div>
-  <div>
-    <label htmlFor="score3" className="block text-sm font-medium text-gray-700 mb-1">
-      Konten Teknologi / Technological Content (20%)
-    </label>
-    <input
-      type="number"
-      id="score3"
-      min="1"
-      max="10"
-      value={scores.score3}
-      onChange={(e) => setScores({ ...scores, score3: e.target.value })}
-      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-    />
-    <p className="text-xs text-gray-500 mt-1">Teknik, konstruksi, material, metode konstruksi</p>
-  </div>
-  <div>
-    <label htmlFor="score4" className="block text-sm font-medium text-gray-700 mb-1">
-      Solusi Inovatif / Innovative Solution (10%)
-    </label>
-    <input
-      type="number"
-      id="score4"
-      min="1"
-      max="10"
-      value={scores.score4}
-      onChange={(e) => setScores({ ...scores, score4: e.target.value })}
-      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-    />
-    <p className="text-xs text-gray-500 mt-1">Kreasi unik dan solusi inovatif</p>
+
+{/* Scoring instruction header */}
+<div className="p-3 mb-3 bg-blue-50 border border-blue-200 rounded-lg">
+  <div className="flex items-start">
+    <div className="flex-shrink-0 mt-0.5">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+    </div>
+    <div className="ml-3">
+      <h3 className="text-sm font-medium text-blue-800">Petunjuk Penilaian</h3>
+      <div className="mt-1 text-xs text-blue-700">
+        <p>Nilai setiap kriteria dengan skala 1-10, dengan 10 sebagai nilai tertinggi.</p>
+      </div>
+    </div>
   </div>
 </div>
 
-// Optional: Add a weighted score calculation
+<div className="grid grid-cols-1 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+  <div>
+    <label htmlFor="score1" className="block text-sm font-medium text-gray-700 mb-1">
+      1. Konten Desain / Design Content (40%)
+    </label>
+    <div className="flex items-center">
+      <input
+        type="number"
+        id="score1"
+        min="1"
+        max="10"
+        value={scores.score1}
+        onChange={(e) => setScores({ ...scores, score1: e.target.value })}
+        className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+      />
+      <span className="ml-2 text-xs text-gray-500">(1-10)</span>
+    </div>
+    <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-xs text-gray-700">
+      <p className="font-semibold mb-1">Aspek Penilaian:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>Penilaian kualitatif: aspek lokalitas & modern pada elemen desain</li>
+        <li>Penilaian kuantitatif: konten, bangunan hijau, kesehatan</li>
+        <li>Efektifitas, efisiensi, kepraktisan</li>
+        <li>Kemampuan menimbulkan rasa kebahagiaan</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div>
+    <label htmlFor="score2" className="block text-sm font-medium text-gray-700 mb-1">
+      2. Aplikasi Warna / Color Application (30%)
+    </label>
+    <div className="flex items-center">
+      <input
+        type="number"
+        id="score2"
+        min="1"
+        max="10"
+        value={scores.score2}
+        onChange={(e) => setScores({ ...scores, score2: e.target.value })}
+        className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+      />
+      <span className="ml-2 text-xs text-gray-500">(1-10)</span>
+    </div>
+    <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-xs text-gray-700">
+      <p className="font-semibold mb-1">Aspek Penilaian:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>Penggunaan True Joys sebagai warna dominan</li>
+        <li>Kombinasi dengan palet warna lainnya</li>
+        <li>Penciptaan atmosfer yang harmonis</li>
+        <li>Kemampuan menginspirasi melalui komposisi warna</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div>
+    <label htmlFor="score3" className="block text-sm font-medium text-gray-700 mb-1">
+      3. Konten Teknologi / Technological Content (20%)
+    </label>
+    <div className="flex items-center">
+      <input
+        type="number"
+        id="score3"
+        min="1"
+        max="10"
+        value={scores.score3}
+        onChange={(e) => setScores({ ...scores, score3: e.target.value })}
+        className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+      />
+      <span className="ml-2 text-xs text-gray-500">(1-10)</span>
+    </div>
+    <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-xs text-gray-700">
+      <p className="font-semibold mb-1">Aspek Penilaian:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>Teknik dan kompetensi dalam eksekusi desain</li>
+        <li>Pemilihan alat konstruksi yang tepat</li>
+        <li>Pemilihan material yang sesuai</li>
+        <li>Metode konstruksi yang digunakan</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div>
+    <label htmlFor="score4" className="block text-sm font-medium text-gray-700 mb-1">
+      4. Solusi Inovatif / Innovative Solution (10%)
+    </label>
+    <div className="flex items-center">
+      <input
+        type="number"
+        id="score4"
+        min="1"
+        max="10"
+        value={scores.score4}
+        onChange={(e) => setScores({ ...scores, score4: e.target.value })}
+        className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+      />
+      <span className="ml-2 text-xs text-gray-500">(1-10)</span>
+    </div>
+    <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 text-xs text-gray-700">
+      <p className="font-semibold mb-1">Aspek Penilaian:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>Kombinasi konten kualitatif & kuantitatif</li>
+        <li>Integrasi teknologi dalam desain</li>
+        <li>Aplikasi warna dalam kreasi</li>
+        <li>Keunikan dan kebaruan solusi yang ditawarkan</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
 <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 mb-4">
   <h4 className="text-sm font-medium text-primary mb-2">Perhitungan Skor Tertimbang</h4>
   <div className="flex justify-between text-sm">
     <span className="text-black">Total Skor:</span>
     <span className="font-medium text-black">
       {scores.score1 && scores.score2 && scores.score3 && scores.score4 ? 
-        ((parseInt(scores.score1) * 0.4) + 
-         (parseInt(scores.score2) * 0.3) + 
-         (parseInt(scores.score3) * 0.2) + 
-         (parseInt(scores.score4) * 0.1)).toFixed(2) 
+        ((parseInt(scores.score1) * 4) + 
+         (parseInt(scores.score2) * 3) + 
+         (parseInt(scores.score3) * 2) + 
+         (parseInt(scores.score4) * 1))
         : '-'}
     </span>
   </div>
+  <div className="flex justify-between text-xs text-gray-500 mt-1">
+    <span>Skor Maksimal: 40 poin</span>
+    <span>
+      (Design: 16, Color: 12, Technology: 8, Innovation: 4)
+    </span>
+  </div>
 </div>
+
+
+
           
           <div className="flex items-center mb-4">
             <input
@@ -979,7 +1051,7 @@ export default function SubmissionsPage() {
                   
                     {selectedSubmission?.submissionFiles?.map((fileUrl, idx) => {
                       const adjustedIdx = selectedSubmission.submissionFile ? idx + 1 : idx;
-                      // Try to determine file type from URL for better icon/preview
+                      
                       const fileExt = fileUrl.split('.').pop()?.toLowerCase();
                       const isPdf = fileExt === 'pdf';
                       const isImage = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExt || '');
