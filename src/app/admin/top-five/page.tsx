@@ -1,4 +1,3 @@
-// src/app/admin/top-five/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,7 +25,8 @@ import {
   Users,
   ListFilter,
   Loader2,
-  Eye
+  Eye,
+  Medal
 } from "lucide-react";
 
 // Types for our submission data
@@ -47,6 +47,27 @@ interface Submission {
   isTopFive?: boolean;
 }
 
+interface JuryEvaluation {
+  id: string;
+  juryId: string;
+  juryName: string;
+  submissionId: string;
+  submissionTitle: string;
+  submissionDescription?: string;
+  categoryName?: string;
+  evaluationMethod: string;
+  selected: boolean;
+  score1?: number;
+  score2?: number;
+  score3?: number;
+  score4?: number;
+  comments?: string;
+  submissionFile?: string;
+  submissionFiles?: SubmissionFile[];
+  isFinalized: boolean;
+  createdAt: string;
+}
+
 export default function AdminTop5Page() {
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -63,11 +84,13 @@ export default function AdminTop5Page() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "top5">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "top5" | "evaluations">("grid");
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [juryEvaluations, setJuryEvaluations] = useState<JuryEvaluation[]>([]);
+  const [selectedEvaluation, setSelectedEvaluation] = useState<JuryEvaluation | null>(null);
   
   const MAX_TOP_SELECTIONS = 5;
   
@@ -149,6 +172,11 @@ export default function AdminTop5Page() {
         // Get already selected top 5
         const initialTopFive = data.submissions.filter(sub => sub.isTopFive);
         setTopFiveSelections(initialTopFive);
+        
+        // Get jury evaluations if available
+        if (data.juryEvaluations) {
+          setJuryEvaluations(data.juryEvaluations);
+        }
       } else {
         throw new Error(data.message || 'Failed to fetch submissions');
       }
@@ -207,19 +235,40 @@ export default function AdminTop5Page() {
     setShowFullDescription(false);
     setErrorMessage(null);
     setSuccessMessage(null);
+    setSelectedEvaluation(null); // Clear any selected evaluation when selecting a submission
+  };
+  
+  const handleSelectEvaluation = (evaluation: JuryEvaluation) => {
+    setSelectedEvaluation(evaluation);
+    setCurrentFileIndex(0);
+    setShowFullDescription(false);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setSelectedSubmission(null); // Clear any selected submission when selecting an evaluation
   };
   
   const getCurrentFileUrl = () => {
-    if (!selectedSubmission) return "";
-    
-    if (selectedSubmission.submissionFile && currentFileIndex === 0) {
-      return selectedSubmission.submissionFile;
-    }
-    
-    if (selectedSubmission.submissionFiles && selectedSubmission.submissionFiles.length > 0) {
-      const adjustedIndex = selectedSubmission.submissionFile ? currentFileIndex - 1 : currentFileIndex;
-      if (adjustedIndex >= 0 && adjustedIndex < selectedSubmission.submissionFiles.length) {
-        return selectedSubmission.submissionFiles[adjustedIndex];
+    if (selectedSubmission) {
+      if (selectedSubmission.submissionFile && currentFileIndex === 0) {
+        return selectedSubmission.submissionFile;
+      }
+      
+      if (selectedSubmission.submissionFiles && selectedSubmission.submissionFiles.length > 0) {
+        const adjustedIndex = selectedSubmission.submissionFile ? currentFileIndex - 1 : currentFileIndex;
+        if (adjustedIndex >= 0 && adjustedIndex < selectedSubmission.submissionFiles.length) {
+          return selectedSubmission.submissionFiles[adjustedIndex];
+        }
+      }
+    } else if (selectedEvaluation) {
+      if (selectedEvaluation.submissionFile && currentFileIndex === 0) {
+        return selectedEvaluation.submissionFile;
+      }
+      
+      if (selectedEvaluation.submissionFiles && selectedEvaluation.submissionFiles.length > 0) {
+        const adjustedIndex = selectedEvaluation.submissionFile ? currentFileIndex - 1 : currentFileIndex;
+        if (adjustedIndex >= 0 && adjustedIndex < selectedEvaluation.submissionFiles.length) {
+          return selectedEvaluation.submissionFiles[adjustedIndex];
+        }
       }
     }
     
@@ -227,21 +276,22 @@ export default function AdminTop5Page() {
   };
   
   const getTotalFiles = () => {
-    if (!selectedSubmission) return 0;
-    
     let count = 0;
-    if (selectedSubmission.submissionFile) count++;
-    if (selectedSubmission.submissionFiles) count += selectedSubmission.submissionFiles.length;
+    
+    if (selectedSubmission) {
+      if (selectedSubmission.submissionFile) count++;
+      if (selectedSubmission.submissionFiles) count += selectedSubmission.submissionFiles.length;
+    } else if (selectedEvaluation) {
+      if (selectedEvaluation.submissionFile) count++;
+      if (selectedEvaluation.submissionFiles) count += selectedEvaluation.submissionFiles.length;
+    }
     
     return count;
   };
   
   const handleNextFile = () => {
-    if (!selectedSubmission || !selectedSubmission.submissionFiles) return;
-    
-    if (currentFileIndex < getTotalFiles() - 1) {
-      setCurrentFileIndex(prev => prev + 1);
-    }
+    if ((!selectedSubmission && !selectedEvaluation) || currentFileIndex >= getTotalFiles() - 1) return;
+    setCurrentFileIndex(prev => prev + 1);
   };
   
   const handlePrevFile = () => {
@@ -386,139 +436,408 @@ export default function AdminTop5Page() {
     );
   }
   
-    
-    // Add this function to render the Top 5 view
-const renderTop5View = () => {
-  if (topFiveSelections.length === 0) {
-    return (
-      <div className="bg-white p-8 rounded-lg shadow-md text-center">
-        <Star className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Top 5 Selections Yet</h3>
-        <p className="text-gray-600 mb-4">
-          You haven't selected any submissions for your Top 5 yet. Use the grid or list view to select submissions.
-        </p>
-        <button
-          onClick={() => setViewMode("grid")}
-          className="px-4 py-2 bg-primary text-white rounded-md"
-        >
-          Go to Grid View
-        </button>
-      </div>
-    );
-  }
+  // Add this function to render the Top 5 view
+  const renderTop5View = () => {
+    if (topFiveSelections.length === 0) {
+      return (
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <Star className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Top 5 Selections Yet</h3>
+          <p className="text-gray-600 mb-4">
+            You haven't selected any submissions for your Top 5 yet. Use the grid or list view to select submissions.
+          </p>
+          <button
+            onClick={() => setViewMode("grid")}
+            className="px-4 py-2 bg-primary text-white rounded-md"
+          >
+            Go to Grid View
+          </button>
+        </div>
+      );
+    }
 
-  return (
-    <div className="space-y-6">
-      {topFiveSelections.map((submission, index) => (
-        <div 
-          key={submission.id}
-          className="bg-white rounded-lg shadow-sm border border-amber-200 overflow-hidden transition-all duration-200"
-        >
-          {/* Header with rank and title */}
-          <div className="bg-amber-50 p-4 border-b border-amber-200 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                {index + 1}
-              </div>
-              <h3 className="font-semibold text-gray-900">{submission.title}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleSelectSubmission(submission)}
-                className="p-2 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-md"
-                title="View Details"
-              >
-                <Eye className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleToggleTopFive(submission)}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-md"
-                title="Remove from Top 5"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-          
-          {/* Preview section */}
-          <div className="p-4 flex flex-col md:flex-row gap-4">
-            {/* Left side - file preview */}
-            <div className="w-full md:w-1/3 bg-gray-50 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center h-80">
-              {submission.submissionFile ? (
-                <iframe 
-                  src={submission.submissionFile}
-                  className="w-full h-full"
-                  title={submission.title}
-                ></iframe>
-              ) : (
-                <FileText className="h-12 w-12 text-gray-400" />
-              )}
-            </div>
-            
-            {/* Right side - details */}
-            <div className="w-full md:w-2/3">
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  {submission.categoryName || "Uncategorized"}
-                </span>
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {new Date(submission.submittedAt).toLocaleDateString()}
-                </span>
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs">
-                  ID: {submission.submissionId}
-                </span>
-                {submission.submissionFiles && submission.submissionFiles.length > 0 && (
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
-                    <FileText className="w-3 h-3 mr-1" />
-                    {submission.submissionFiles.length + (submission.submissionFile ? 1 : 0)} files
-                  </span>
-                )}
-              </div>
-              
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-1">Description</h4>
-                <p className="text-sm text-gray-600 line-clamp-6">
-                  {submission.description || "No description provided."}
-                </p>
-              </div>
-              
-              {/* Additional files thumbnails */}
-              {submission.submissionFiles && submission.submissionFiles.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Additional Files</h4>
-                  <div className="flex overflow-x-auto gap-2 pb-2">
-                    {submission.submissionFiles.map((fileUrl, idx) => (
-                      <a 
-                        key={idx}
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-shrink-0 w-20 h-20 border border-gray-200 rounded-md bg-gray-50 flex items-center justify-center hover:border-primary transition-colors"
-                      >
-                        <FileText className="h-6 w-6 text-gray-400" />
-                      </a>
-                    ))}
-                  </div>
+    return (
+      <div className="space-y-6">
+        {topFiveSelections.map((submission, index) => (
+          <div 
+            key={submission.id}
+            className="bg-white rounded-lg shadow-sm border border-amber-200 overflow-hidden transition-all duration-200"
+          >
+            {/* Header with rank and title */}
+            <div className="bg-amber-50 p-4 border-b border-amber-200 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                  {index + 1}
                 </div>
-              )}
-              
-              <div className="mt-4 flex justify-end">
+                <h3 className="font-semibold text-gray-900">{submission.title}</h3>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleSelectSubmission(submission)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-white hover:bg-primary/90"
+                  className="p-2 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-md"
+                  title="View Details"
                 >
-                  <Eye className="h-4 w-4" />
-                  View Details
+                  <Eye className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleToggleTopFive(submission)}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-md"
+                  title="Remove from Top 5"
+                >
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
+            
+            {/* Preview section */}
+            <div className="p-4 flex flex-col md:flex-row gap-4">
+              {/* Left side - file preview */}
+              <div className="w-full md:w-1/3 bg-gray-50 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center h-80">
+                {submission.submissionFile ? (
+                  <iframe 
+                    src={submission.submissionFile}
+                    className="w-full h-full"
+                    title={submission.title}
+                  ></iframe>
+                ) : (
+                  <FileText className="h-12 w-12 text-gray-400" />
+                )}
+              </div>
+              
+              {/* Right side - details */}
+              <div className="w-full md:w-2/3">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
+                    {submission.categoryName || "Uncategorized"}
+                  </span>
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {new Date(submission.submittedAt).toLocaleDateString()}
+                  </span>
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs">
+                    ID: {submission.submissionId}
+                  </span>
+                  {submission.submissionFiles && submission.submissionFiles.length > 0 && (
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
+                      <FileText className="w-3 h-3 mr-1" />
+                      {submission.submissionFiles.length + (submission.submissionFile ? 1 : 0)} files
+                    </span>
+                  )}
+                </div>
+                
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Description</h4>
+                  <p className="text-sm text-gray-600 line-clamp-6">
+                    {submission.description || "No description provided."}
+                  </p>
+                </div>
+                
+                {/* Additional files thumbnails */}
+                {submission.submissionFiles && submission.submissionFiles.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Additional Files</h4>
+                    <div className="flex overflow-x-auto gap-2 pb-2">
+                      {submission.submissionFiles.map((fileUrl, idx) => (
+                        <a 
+                          key={idx}
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 w-20 h-20 border border-gray-200 rounded-md bg-gray-50 flex items-center justify-center hover:border-primary transition-colors"
+                        >
+                          <FileText className="h-6 w-6 text-gray-400" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => handleSelectSubmission(submission)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-white hover:bg-primary/90"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Render jury evaluations view
+  const renderEvaluationsView = () => {
+    if (juryEvaluations.length === 0) {
+      return (
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <Medal className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Jury Evaluations Yet</h3>
+          <p className="text-gray-600 mb-4">
+            No jury evaluations have been submitted yet.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        {/* Evaluations table */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="font-semibold text-lg text-gray-900">Jury Evaluations (Selected Submissions)</h2>
+            <p className="text-sm text-gray-600">Showing top evaluations from all jury members</p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Jury Name
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Submission
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Method
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {juryEvaluations.slice(0, 10).map((evaluation) => (
+                  <tr 
+                    key={evaluation.id}
+                    className={`hover:bg-gray-50 ${selectedEvaluation?.id === evaluation.id ? 'bg-primary/5' : ''}`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{evaluation.juryName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-medium">{evaluation.submissionTitle}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {evaluation.categoryName || "Unknown"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${evaluation.evaluationMethod === 'checkbox' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-green-100 text-green-800'}`
+                      }>
+                        {evaluation.evaluationMethod === 'checkbox' ? 'Checkbox' : 'Scoring'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${evaluation.isFinalized 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-amber-100 text-amber-800'}`
+                      }>
+                        {evaluation.isFinalized ? 'Finalized' : 'In Progress'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => handleSelectEvaluation(evaluation)}
+                        className="px-3 py-1 bg-primary text-white text-xs rounded-md hover:bg-primary/90"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      ))}
-    </div>
-  );
-};
+        
+        {/* Selected evaluation details */}
+        {selectedEvaluation && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="font-semibold text-lg text-gray-900">
+                  Evaluation by {selectedEvaluation.juryName}
+                </h2>
+                <div className="text-sm text-gray-600">
+                  Submission: {selectedEvaluation.submissionTitle}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-1 text-xs font-medium rounded-md
+                  ${selectedEvaluation.evaluationMethod === 'checkbox' 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-green-100 text-green-800'}`
+                }>
+                  {selectedEvaluation.evaluationMethod === 'checkbox' ? 'Checkbox Evaluation' : 'Score Evaluation'}
+                </span>
+                <span className={`px-2 py-1 text-xs font-medium rounded-md
+                  ${selectedEvaluation.isFinalized
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-amber-100 text-amber-800'}`
+                }>
+                  {selectedEvaluation.isFinalized ? 'Finalized' : 'In Progress'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-gray-50 border-b border-gray-200">
+              {selectedEvaluation.evaluationMethod === 'scoring' ? (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">Scores</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-white p-3 rounded-md border border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">Design Content (40%)</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedEvaluation.score1 || 'N/A'}</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-md border border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">Color Application (30%)</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedEvaluation.score2 || 'N/A'}</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-md border border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">Technological Content (20%)</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedEvaluation.score3 || 'N/A'}</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-md border border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">Innovative Solution (10%)</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedEvaluation.score4 || 'N/A'}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Weighted score calculation */}
+                  {selectedEvaluation.score1 && selectedEvaluation.score2 && 
+                   selectedEvaluation.score3 && selectedEvaluation.score4 && (
+                    <div className="mt-4 bg-primary/10 p-3 rounded-md border border-primary/20">
+                      <h4 className="text-sm font-medium text-primary mb-1">Weighted Score</h4>
+                      <div className="text-xl font-bold text-gray-900">
+                        {(selectedEvaluation.score1 * 4) + 
+                         (selectedEvaluation.score2 * 3) + 
+                         (selectedEvaluation.score3 * 2) + 
+                         (selectedEvaluation.score4 * 1)}
+                        <span className="text-sm font-normal text-gray-500 ml-1">/100</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white p-3 rounded-md border border-gray-200">
+                  <h3 className="font-medium text-gray-900 mb-2">Selection Status</h3>
+                  <div className="flex items-center">
+                    <div className={`w-6 h-6 rounded-full ${selectedEvaluation.selected ? 'bg-green-500' : 'bg-red-500'} mr-2`}>
+                      {selectedEvaluation.selected ? (
+                        <Check className="h-4 w-4 text-white m-1" />
+                      ) : (
+                        <X className="h-4 w-4 text-white m-1" />
+                      )}
+                    </div>
+                    <span className="text-gray-900">
+                      {selectedEvaluation.selected ? 'Selected for Top Submissions' : 'Not Selected'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Submission Description section */}
+            {selectedEvaluation.submissionDescription && (
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-medium text-gray-900 mb-2">Submission Description</h3>
+                <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                  <p className="text-gray-700 whitespace-pre-line">{selectedEvaluation.submissionDescription}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Comments section */}
+            {selectedEvaluation.comments && (
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-medium text-gray-900 mb-2">Jury Comments</h3>
+                <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                  <p className="text-gray-700 whitespace-pre-line">{selectedEvaluation.comments}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* File Preview */}
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium text-gray-900">Submission Files</h3>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handlePrevFile}
+                    disabled={currentFileIndex === 0}
+                    className={`p-1.5 rounded ${currentFileIndex === 0
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    aria-label="Previous file"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    {currentFileIndex + 1} of {getTotalFiles()}
+                  </span>
+                  <button
+                    onClick={handleNextFile}
+                    disabled={currentFileIndex === getTotalFiles() - 1}
+                    className={`p-1.5 rounded ${currentFileIndex === getTotalFiles() - 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    aria-label="Next file"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                  
+                  <a
+                    href={getCurrentFileUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 text-gray-700 hover:bg-gray-200 rounded"
+                    title="Open in new tab"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            {/* Main file preview iframe */}
+            <div className="h-[500px] flex items-center justify-center">
+              {getCurrentFileUrl() ? (
+                <iframe
+                  src={getCurrentFileUrl()}
+                  className="w-full h-full"
+                  title="Submission file preview"
+                ></iframe>
+              ) : (
+                <div className="text-center text-gray-500">
+                  <FileText className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p>File not available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
   // Render grid view for submissions
   const renderGridView = () => {
     return (
@@ -896,23 +1215,33 @@ const renderTop5View = () => {
               <div className="flex rounded-md shadow-sm">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`px-4 py-2 rounded-l-md ${
+                  className={`px-4 py-2 ${
                     viewMode === "grid"
                       ? "bg-primary text-white"
                       : "bg-white text-gray-700 border border-gray-300"
-                  }`}
+                  } ${viewMode === "evaluations" ? "rounded-l-md" : ""}`}
                 >
                   Grid
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`px-4 py-2 rounded-r-md ${
+                  className={`px-4 py-2 ${
                     viewMode === "list"
                       ? "bg-primary text-white"
                       : "bg-white text-gray-700 border border-r border-t border-b border-gray-300"
                   }`}
                 >
                   List
+                </button>
+                <button
+                  onClick={() => setViewMode("evaluations")}
+                  className={`px-4 py-2 rounded-r-md ${
+                    viewMode === "evaluations"
+                      ? "bg-primary text-white"
+                      : "bg-white text-gray-700 border border-r border-t border-b border-gray-300"
+                  }`}
+                >
+                  Jury Evaluations
                 </button>
               </div>
             </div>
@@ -949,7 +1278,9 @@ const renderTop5View = () => {
           {/* Results count and info */}
           <div className="mb-4 flex justify-between items-center">
             <div className="text-sm text-gray-600">
-              Showing {filteredSubmissions.length} submissions
+              {viewMode === "evaluations" 
+                ? `Showing ${juryEvaluations.length} jury evaluations` 
+                : `Showing ${filteredSubmissions.length} submissions`}
             </div>
             
             <div className="text-sm text-gray-600">
@@ -963,24 +1294,34 @@ const renderTop5View = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading submissions...</p>
             </div>
-          ) : filteredSubmissions.length === 0 ? (
-            <div className="bg-white p-8 rounded-lg shadow-md text-center">
-              <ListFilter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No submissions found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your search or filters to find what you're looking for.
-              </p>
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 bg-primary text-white rounded-md"
-              >
-                Clear Filters
-              </button>
-            </div>
+          ) : viewMode === "evaluations" ? (
+            renderEvaluationsView()
           ) : (
-            <div className="mb-6">
-              {viewMode === "grid" ? renderGridView() : renderListView()}
-            </div>
+            <>
+              {filteredSubmissions.length === 0 ? (
+                <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                  <ListFilter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No submissions found</h3>
+                  <p className="text-gray-600 mb-4">
+                    Try adjusting your search or filters to find what you're looking for.
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 bg-primary text-white rounded-md"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                <div className="mb-6">
+                  {viewMode === "grid" 
+                    ? renderGridView() 
+                    : viewMode === "list" 
+                      ? renderListView() 
+                      : renderTop5View()}
+                </div>
+              )}
+            </>
           )}
           
           {/* Selected Submission Preview */}
