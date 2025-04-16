@@ -1,13 +1,22 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import PinLogin from '@/components/PinLogin';
 import Image from 'next/image';
 import { ChevronLeft, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
+  // Wrap the component that uses useSearchParams in Suspense
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [networkError, setNetworkError] = useState(false);
