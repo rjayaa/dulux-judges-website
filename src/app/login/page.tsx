@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import PinLogin from '@/components/PinLogin';
 import Image from 'next/image';
@@ -11,7 +11,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [networkError, setNetworkError] = useState(false);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get redirect URL from query parameters
+  useEffect(() => {
+    const redirectToParam = searchParams.get('redirectTo');
+    if (redirectToParam) {
+      setRedirectTo(redirectToParam);
+    }
+  }, [searchParams]);
 
   // Check if already logged in
   useEffect(() => {
@@ -21,8 +31,14 @@ export default function LoginPage() {
         const data = await response.json();
         
         if (data.success && data.authenticated) {
-          // Already authenticated, redirect to evaluation method selection page
-          router.push('/evaluation-method');
+          // Already authenticated, redirect to appropriate page
+          if (data.judge && data.judge.id === "00832") {
+            // Admin user
+            router.push(redirectTo && redirectTo.startsWith('/admin') ? redirectTo : '/admin/top-five');
+          } else {
+            // Regular jury
+            router.push(redirectTo && !redirectTo.startsWith('/admin') ? redirectTo : '/evaluation-method');
+          }
         } else {
           // Not authenticated, show login form
           setLoading(false);
@@ -35,12 +51,18 @@ export default function LoginPage() {
     }
     
     checkAuth();
-  }, [router]);
+  }, [router, redirectTo]);
 
   // Handle login success
-  const handleLoginSuccess = (success: boolean, errorMessage?: string) => {
+  const handleLoginSuccess = (success: boolean, isAdmin?: boolean, errorMessage?: string) => {
     if (success) {
-      router.push('/evaluation-method');
+      if (isAdmin) {
+        // Admin user - redirect to admin page
+        router.push(redirectTo && redirectTo.startsWith('/admin') ? redirectTo : '/admin/top-five');
+      } else {
+        // Regular jury - redirect to evaluation method page
+        router.push(redirectTo && !redirectTo.startsWith('/admin') ? redirectTo : '/evaluation-method');
+      }
     } else if (errorMessage) {
       setError(errorMessage);
     }
@@ -59,7 +81,7 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 h-full flex items-center justify-center p-6 bg-white relative z-10">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-black">Judge Login</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-black">System Login</h1>
             <p className="text-gray-600 mt-2">Enter your PIN to access the judging system</p>
           </div>
 
