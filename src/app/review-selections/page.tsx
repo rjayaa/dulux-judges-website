@@ -370,7 +370,7 @@ export default function ReviewSelectionsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {submission.submissionId.substring(0, 10)}...
+                            {submission.submissionId}
                           </td>
                           {evaluationMethod === "scoring" && (
                             <td className="px-6 py-4 whitespace-nowrap">

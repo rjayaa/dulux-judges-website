@@ -520,7 +520,11 @@ export default function SubmissionsPage() {
                 <p>{successMessage}</p>
               </div>
             )}
-            
+            {!isSelected && (
+  <p className="text-xs text-gray-500 mt-2">
+    Please check the box above to enable the Save button
+  </p>
+)}
             <div className="flex justify-between gap-2">
               <div className="flex gap-2">
                 <button
@@ -547,21 +551,24 @@ export default function SubmissionsPage() {
                 </button>
               </div>
               
-              <button
-                onClick={handleSubmitEvaluation}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md transition duration-200 ${isSubmitting
-                  ? "bg-gray-300 cursor-not-allowed text-gray-600"
-                  : "bg-primary hover:bg-primary/90 text-white"
-                  }`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Saving...
-                  </span>
-                ) : "Save Selection"}
-              </button>
+                            <button
+                    onClick={handleSubmitEvaluation}
+                    disabled={isSubmitting || !isSelected}
+                    className={`px-4 py-2 rounded-md transition duration-200 ${
+                        isSubmitting || !isSelected
+                        ? "bg-gray-300 cursor-not-allowed text-gray-600"
+                        : "bg-primary hover:bg-primary/90 text-white"
+                    }`}
+                    >
+                    {isSubmitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Saving...
+                        </span>
+                    ) : "Save Selection"}
+                      </button>
+                      
+                      
             </div>
           </div>
         </div>
@@ -576,64 +583,87 @@ export default function SubmissionsPage() {
             </span>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-            <div>
-              <label htmlFor="score1" className="block text-sm font-medium text-gray-700 mb-1">
-                Theme Relevance (1-10)
-              </label>
-              <input
-                type="number"
-                id="score1"
-                min="1"
-                max="10"
-                value={scores.score1}
-                onChange={(e) => setScores({ ...scores, score1: e.target.value })}
-                className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-              />
-            </div>
-            <div>
-              <label htmlFor="score2" className="block text-sm font-medium text-gray-700 mb-1">
-                Technical Execution (1-10)
-              </label>
-              <input
-                type="number"
-                id="score2"
-                min="1"
-                max="10"
-                value={scores.score2}
-                onChange={(e) => setScores({ ...scores, score2: e.target.value })}
-                className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-              />
-            </div>
-            <div>
-              <label htmlFor="score3" className="block text-sm font-medium text-gray-700 mb-1">
-                Originality (1-10)
-              </label>
-              <input
-                type="number"
-                id="score3"
-                min="1"
-                max="10"
-                value={scores.score3}
-                onChange={(e) => setScores({ ...scores, score3: e.target.value })}
-                className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-              />
-            </div>
-            <div>
-              <label htmlFor="score4" className="block text-sm font-medium text-gray-700 mb-1">
-                Overall Impact (1-10)
-              </label>
-              <input
-                type="number"
-                id="score4"
-                min="1"
-                max="10"
-                value={scores.score4}
-                onChange={(e) => setScores({ ...scores, score4: e.target.value })}
-                className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
-              />
-            </div>
-          </div>
+         // Updated scoring section for renderEvaluationForm function in src/app/submissions/submissionsContent.tsx
+
+// Replace the existing grid layout with these updated criteria
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+  <div>
+    <label htmlFor="score1" className="block text-sm font-medium text-gray-700 mb-1">
+      Konten Desain / Design Content (40%)
+    </label>
+    <input
+      type="number"
+      id="score1"
+      min="1"
+      max="10"
+      value={scores.score1}
+      onChange={(e) => setScores({ ...scores, score1: e.target.value })}
+      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+    />
+    <p className="text-xs text-gray-500 mt-1">Penilaian aspek lokalitas, modern, bangunan hijau, dll.</p>
+  </div>
+  <div>
+    <label htmlFor="score2" className="block text-sm font-medium text-gray-700 mb-1">
+      Aplikasi Warna / Color Application (30%)
+    </label>
+    <input
+      type="number"
+      id="score2"
+      min="1"
+      max="10"
+      value={scores.score2}
+      onChange={(e) => setScores({ ...scores, score2: e.target.value })}
+      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+    />
+    <p className="text-xs text-gray-500 mt-1">Penggunaan True Joys dan kombinasi palet warna</p>
+  </div>
+  <div>
+    <label htmlFor="score3" className="block text-sm font-medium text-gray-700 mb-1">
+      Konten Teknologi / Technological Content (20%)
+    </label>
+    <input
+      type="number"
+      id="score3"
+      min="1"
+      max="10"
+      value={scores.score3}
+      onChange={(e) => setScores({ ...scores, score3: e.target.value })}
+      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+    />
+    <p className="text-xs text-gray-500 mt-1">Teknik, konstruksi, material, metode konstruksi</p>
+  </div>
+  <div>
+    <label htmlFor="score4" className="block text-sm font-medium text-gray-700 mb-1">
+      Solusi Inovatif / Innovative Solution (10%)
+    </label>
+    <input
+      type="number"
+      id="score4"
+      min="1"
+      max="10"
+      value={scores.score4}
+      onChange={(e) => setScores({ ...scores, score4: e.target.value })}
+      className="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
+    />
+    <p className="text-xs text-gray-500 mt-1">Kreasi unik dan solusi inovatif</p>
+  </div>
+</div>
+
+// Optional: Add a weighted score calculation
+<div className="p-3 bg-primary/5 rounded-lg border border-primary/20 mb-4">
+  <h4 className="text-sm font-medium text-primary mb-2">Perhitungan Skor Tertimbang</h4>
+  <div className="flex justify-between text-sm">
+    <span className="text-black">Total Skor:</span>
+    <span className="font-medium text-black">
+      {scores.score1 && scores.score2 && scores.score3 && scores.score4 ? 
+        ((parseInt(scores.score1) * 0.4) + 
+         (parseInt(scores.score2) * 0.3) + 
+         (parseInt(scores.score3) * 0.2) + 
+         (parseInt(scores.score4) * 0.1)).toFixed(2) 
+        : '-'}
+    </span>
+  </div>
+</div>
           
           <div className="flex items-center mb-4">
             <input

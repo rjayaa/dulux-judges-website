@@ -26,20 +26,20 @@ export async function GET(request: NextRequest) {
     }
     
     // Fetch selected submissions with joined data
-    const [evaluations] = await pool.query(`
-      SELECT 
-        e.*,
-        s.*,
-        c.name as categoryName
-      FROM 
-        JuryEvaluation e
-      JOIN 
-        Submission s ON e.submissionId = s.id
-      JOIN 
-        Category c ON s.categoryId = c.id
-      WHERE 
-        e.juryId = ? AND e.selected = 1
-    `, [judge.id]);
+  const [evaluations] = await pool.query(`
+  SELECT 
+    e.*,
+    s.*,
+    c.name as categoryName
+  FROM 
+    JuryEvaluation e
+  JOIN 
+    SubmissionValid s ON e.submissionId = s.id  
+  JOIN 
+    Category c ON s.categoryId = c.id
+  WHERE 
+    e.juryId = ? AND e.selected = 1
+`, [judge.id]);
     
     // Map to the expected format
     const selectedSubmissions = (evaluations as any[]).map(evaluation => ({
