@@ -367,7 +367,7 @@ export default function SubmissionsPage() {
       return;
     }
     
-    // Check if adding a new evaluation would exceed the limit
+    
     if (!selectedSubmission.evaluated && isSelected && evaluationCount >= MAX_EVALUATIONS) {
       setErrorMessage(`You have reached the maximum limit of ${MAX_EVALUATIONS} evaluations. Please remove some selections before adding new ones.`);
       return;
@@ -459,7 +459,7 @@ export default function SubmissionsPage() {
     window.location.reload();
   };
   
-  // Render different evaluation forms based on the selected method
+  
   const renderEvaluationForm = () => {
     if (!selectedSubmission) return null;
     
@@ -614,7 +614,21 @@ export default function SubmissionsPage() {
         min="1"
         max="10"
         value={scores.score1}
-        onChange={(e) => setScores({ ...scores, score1: e.target.value })}
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          if (!isNaN(value)) {
+            // Clamp value between 1 and 10
+            const clampedValue = Math.min(Math.max(value, 1), 10);
+            setScores({ ...scores, score1: clampedValue.toString() });
+          } else {
+            setScores({ ...scores, score1: "" });
+          }
+        }}
+        onBlur={(e) => {
+          if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+            setScores({ ...scores, score1: "1" });
+          }
+        }}
         className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
       />
       <span className="ml-2 text-xs text-gray-500">(1-10)</span>
@@ -641,7 +655,21 @@ export default function SubmissionsPage() {
         min="1"
         max="10"
         value={scores.score2}
-        onChange={(e) => setScores({ ...scores, score2: e.target.value })}
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          if (!isNaN(value)) {
+            // Clamp value between 1 and 10
+            const clampedValue = Math.min(Math.max(value, 1), 10);
+            setScores({ ...scores, score2: clampedValue.toString() });
+          } else {
+            setScores({ ...scores, score2: "" });
+          }
+        }}
+        onBlur={(e) => {
+          if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+            setScores({ ...scores, score2: "1" });
+          }
+        }}
         className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
       />
       <span className="ml-2 text-xs text-gray-500">(1-10)</span>
@@ -668,7 +696,21 @@ export default function SubmissionsPage() {
         min="1"
         max="10"
         value={scores.score3}
-        onChange={(e) => setScores({ ...scores, score3: e.target.value })}
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          if (!isNaN(value)) {
+            // Clamp value between 1 and 10
+            const clampedValue = Math.min(Math.max(value, 1), 10);
+            setScores({ ...scores, score3: clampedValue.toString() });
+          } else {
+            setScores({ ...scores, score3: "" });
+          }
+        }}
+        onBlur={(e) => {
+          if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+            setScores({ ...scores, score3: "1" });
+          }
+        }}
         className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
       />
       <span className="ml-2 text-xs text-gray-500">(1-10)</span>
@@ -695,7 +737,21 @@ export default function SubmissionsPage() {
         min="1"
         max="10"
         value={scores.score4}
-        onChange={(e) => setScores({ ...scores, score4: e.target.value })}
+        onChange={(e) => {
+          const value = parseInt(e.target.value);
+          if (!isNaN(value)) {
+            // Clamp value between 1 and 10
+            const clampedValue = Math.min(Math.max(value, 1), 10);
+            setScores({ ...scores, score4: clampedValue.toString() });
+          } else {
+            setScores({ ...scores, score4: "" });
+          }
+        }}
+        onBlur={(e) => {
+          if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+            setScores({ ...scores, score4: "1" });
+          }
+        }}
         className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800"
       />
       <span className="ml-2 text-xs text-gray-500">(1-10)</span>
@@ -727,7 +783,7 @@ export default function SubmissionsPage() {
     </span>
   </div>
   <div className="flex justify-between text-xs text-gray-500 mt-1">
-    <span>Skor Maksimal: 40 poin</span>
+    <span>Skor Maksimal: 100 poin</span>
     <span>
       (Design: 16, Color: 12, Technology: 8, Innovation: 4)
     </span>
