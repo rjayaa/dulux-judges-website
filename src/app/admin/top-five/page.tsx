@@ -93,7 +93,7 @@ export default function AdminTop5Page() {
   const [juryEvaluations, setJuryEvaluations] = useState<JuryEvaluation[]>([]);
   const [selectedEvaluation, setSelectedEvaluation] = useState<JuryEvaluation | null>(null);
   
-  const MAX_TOP_SELECTIONS = 5;
+  const MAX_TOP_SELECTIONS = 6;
   
   // Check authentication first
   useEffect(() => {

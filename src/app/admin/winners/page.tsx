@@ -424,7 +424,7 @@ export default function AdminFinalistScoringPage() {
       <div className="flex-1 p-4">
         <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center max-w-md mx-auto">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Loading Finalists</h2>
+          <h2 className="text-xl font-semibold mb-2 text-black">Loading Finalists</h2>
           <p className="text-gray-600">Please wait while we fetch the top 5 submissions...</p>
         </div>
       </div>

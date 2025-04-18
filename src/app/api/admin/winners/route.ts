@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const [judges] = await pool.query(`
       SELECT id, fullName
       FROM Jury
-      WHERE isActive = 1
+      WHERE isActive = 1 AND id != "00832"
       ORDER BY fullName ASC
     `);
     

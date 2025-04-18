@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    const MAX_TOP_SELECTIONS = 5;
+    const MAX_TOP_SELECTIONS = 6;
     
     if (data.submissions.length > MAX_TOP_SELECTIONS) {
       return NextResponse.json({ 
