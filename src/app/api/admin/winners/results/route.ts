@@ -147,3 +147,57 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+// Add DELETE method to handle score deletion
+export async function DELETE(request: NextRequest) {
+  try {
+    // Check authentication and admin access
+    const judge = getCurrentJudge();
+    
+    if (!judge || !isAdmin()) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Unauthorized - Admin access required" 
+      }, { status: 401 });
+    }
+    
+    // Get the score ID from the request
+    const data = await request.json();
+    const { scoreId } = data;
+    
+    if (!scoreId) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Score ID is required" 
+      }, { status: 400 });
+    }
+    
+    // Delete the score from the database
+    const [result] = await pool.query(
+      "DELETE FROM FinalScores WHERE id = ?",
+      [scoreId]
+    );
+    
+    const deleteResult = result as any;
+    
+    if (deleteResult.affectedRows === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Score not found or already deleted" 
+      }, { status: 404 });
+    }
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: "Score deleted successfully" 
+    });
+    
+  } catch (error) {
+    console.error("Delete score API error:", error);
+    
+    return NextResponse.json({ 
+      success: false, 
+      message: "Server error" 
+    }, { status: 500 });
+  }
+}

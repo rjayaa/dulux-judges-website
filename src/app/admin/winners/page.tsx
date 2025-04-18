@@ -168,36 +168,62 @@ export default function AdminFinalistScoringPage() {
     setEditScoreId(judgeScore.finalScoreId);
   };
   
-  const handleDeleteScore = async (judgeId: string, scoreId: string) => {
+    const handleDeleteScore = async (judgeId: string, scoreId: string) => {
     if (!confirm("Are you sure you want to delete this score?")) {
       return;
     }
     
     try {
-      // This is a simplified version - you'd want to add an API endpoint for deletion
-      alert("Score deletion would be implemented here");
+      setIsSubmitting(true);
+      setErrorMessage(null);
       
-      // Update UI to reflect deletion
-      if (selectedFinalist) {
-        const updatedFinalist = {
-          ...selectedFinalist,
-          judges: selectedFinalist.judges.filter(j => j.finalScoreId !== scoreId)
-        };
+      const response = await fetch('/api/admin/winners/results', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scoreId })
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/login?redirectTo=/admin/winners');
+          return;
+        }
         
-        setSelectedFinalist(updatedFinalist);
-        
-        setFinalists(prev => prev.map(f =>
-          f.id === updatedFinalist.id ? updatedFinalist : f
-        ));
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete score');
       }
       
-      setSuccessMessage("Score deleted successfully");
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update UI to reflect deletion
+        if (selectedFinalist) {
+          const updatedFinalist = {
+            ...selectedFinalist,
+            judges: selectedFinalist.judges.filter(j => j.finalScoreId !== scoreId)
+          };
+          
+          setSelectedFinalist(updatedFinalist);
+          
+          setFinalists(prev => prev.map(f =>
+            f.id === updatedFinalist.id ? updatedFinalist : f
+          ));
+        }
+        
+        setSuccessMessage("Score deleted successfully");
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 3000);
+      } else {
+        throw new Error(data.message || 'Failed to delete score');
+      }
     } catch (error) {
       console.error("Error deleting score:", error);
-      setErrorMessage("Failed to delete score");
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
