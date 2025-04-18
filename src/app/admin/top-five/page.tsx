@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -1134,21 +1135,36 @@ export default function AdminTop5Page() {
       <div className="flex-1 overflow-auto bg-gray-50 p-4">
         <div className="max-w-7xl mx-auto">
           {/* Admin Info Bar */}
-          <div className="mb-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-full">
-                <Users className="h-5 w-5 text-primary" />
+          <div className="mb-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-full">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-medium text-gray-800">Admin Control Panel</h2>
+                  <p className="text-sm text-gray-600">
+                    Select the top 5 submissions that will be featured on the website.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-medium text-gray-800">Admin Control Panel</h2>
-                <p className="text-sm text-gray-600">
-                  Select the top 5 submissions that will be featured on the website.
-                </p>
+              
+              <div className="flex flex-wrap gap-3">
+                <div className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-md flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  <span>Total Submissions: <span className="font-bold">{submissions.length}</span></span>
+                </div>
+                
+                <div className="text-sm bg-purple-100 text-purple-800 px-3 py-1 rounded-md flex items-center gap-1">
+                  <Medal className="h-4 w-4" />
+                  <span>Jury Evaluations: <span className="font-bold">{juryEvaluations.length}</span></span>
+                </div>
+                
+                <div className="text-sm bg-amber-100 text-amber-800 px-3 py-1 rounded-md flex items-center gap-1">
+                  <Info className="h-4 w-4" />
+                  <span>Changes publish immediately</span>
+                </div>
               </div>
-            </div>
-            <div className="text-sm bg-amber-100 text-amber-800 px-3 py-1 rounded-md flex items-center gap-1">
-              <Info className="h-4 w-4" />
-              <span>Changes will be published immediately</span>
             </div>
           </div>
           
