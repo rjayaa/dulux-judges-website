@@ -20,8 +20,10 @@ import {
   ArrowLeft,
   RefreshCw,
   Star,
-  Calculator
+  Calculator,
+  Printer
 } from "lucide-react";
+import EnhancedJudgingResults from "@/components/EnhancedJudgingResults";
 
 interface Judge {
   id: string;
@@ -50,17 +52,15 @@ interface FinalistResult {
   averageScore: number | null;
 }
 
-export default function JuryResultsPage() {
+export default function EnhancedResultsPage() {
   const router = useRouter();
-  const tableRef = useRef<HTMLTableElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [judges, setJudges] = useState<Judge[]>([]);
   const [results, setResults] = useState<FinalistResult[]>([]);
-  const [showCriteria, setShowCriteria] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<"rank" | "score">("score");
-  const [showDetails, setShowDetails] = useState<Record<string, boolean>>({});
-  
+  const [showLegend, setShowLegend] = useState<boolean>(true);
+
   // Fetch results data
   useEffect(() => {
     const fetchResults = async () => {
@@ -90,13 +90,6 @@ export default function JuryResultsPage() {
         if (data.success) {
           setJudges(data.judges);
           setResults(data.results);
-          
-          // Initialize show details state
-          const initialShowDetails: Record<string, boolean> = {};
-          data.results.forEach((result: FinalistResult) => {
-            initialShowDetails[result.id] = false;
-          });
-          setShowDetails(initialShowDetails);
         } else {
           throw new Error(data.message || 'Failed to fetch jury results');
         }
@@ -110,106 +103,48 @@ export default function JuryResultsPage() {
     
     fetchResults();
   }, [router]);
-  
-  // Toggle showing detailed criteria for each judge
-  const toggleCriteria = () => {
-    setShowCriteria(!showCriteria);
-  };
-  
-  // Toggle sorting by rank or score
-  const toggleSortBy = () => {
-    setSortBy(sortBy === "rank" ? "score" : "rank");
+
+  // Handle printing the results
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
     
-    // Sort the results based on the new sort criteria
-    if (sortBy === "rank") {
-      // Already sorted by score (default), no need to re-sort
-    } else {
-      // Sort by original rank
-      setResults([...results].sort((a, b) => a.rank - b.rank));
+    if (printWindow && printRef.current) {
+      // Create a new document in the new window
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Judging Results</title>
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+            <style>
+              @media print {
+                body { font-size: 12pt; }
+                table { page-break-inside: avoid; }
+                tr { page-break-inside: avoid; }
+                h2 { font-size: 18pt; font-weight: bold; margin-bottom: 10px; }
+                h3 { font-size: 14pt; font-weight: bold; margin-bottom: 8px; }
+                .print-header { text-align: center; margin-bottom: 20px; }
+              }
+            </style>
+          </head>
+          <body class="p-4">
+            <div class="print-header">
+              <h1 class="text-2xl font-bold mb-2">Design Competition Final Results</h1>
+              <p class="text-gray-600">Generated on ${new Date().toLocaleDateString()}</p>
+            </div>
+            ${printRef.current.innerHTML}
+          </body>
+        </html>
+      `);
+      
+      // Wait for content to load then print
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        // printWindow.close();
+      }, 1000);
     }
-  };
-  
-  // Toggle showing detailed breakdown for a finalist
-  const toggleDetails = (finalistId: string) => {
-    setShowDetails({
-      ...showDetails,
-      [finalistId]: !showDetails[finalistId]
-    });
-  };
-  
-  // Export table to Excel
-  const exportToExcel = () => {
-    // Create CSV content
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Add headers
-    let headers = ["Rank", "Submission", "Category"];
-    
-    if (showCriteria) {
-      // Add detailed criteria headers for each judge
-      judges.forEach(judge => {
-        headers.push(`${judge.name} - Design (40%)`);
-        headers.push(`${judge.name} - Color (30%)`);
-        headers.push(`${judge.name} - Tech (20%)`);
-        headers.push(`${judge.name} - Innov (10%)`);
-        headers.push(`${judge.name} - Total`);
-      });
-    } else {
-      // Add just the total score for each judge
-      judges.forEach(judge => {
-        headers.push(judge.name);
-      });
-    }
-    
-    headers.push("Average");
-    csvContent += headers.join(",") + "\r\n";
-    
-    // Add data rows
-    results.forEach((result, index) => {
-      let row = [
-        (index + 1).toString(),
-        `"${result.title}"`,
-        `"${result.categoryName}"`
-      ];
-      
-      if (showCriteria) {
-        // Add detailed criteria scores for each judge
-        result.judgeScores.forEach(judgeScore => {
-          if (judgeScore) {
-            row.push(judgeScore.score1.toString());
-            row.push(judgeScore.score2.toString());
-            row.push(judgeScore.score3.toString());
-            row.push(judgeScore.score4.toString());
-            row.push(judgeScore.weightedScore.toString());
-          } else {
-            row.push("","","","",""); // Empty cells for missing judge scores
-          }
-        });
-      } else {
-        // Add just the total score for each judge
-        result.judgeScores.forEach(judgeScore => {
-          if (judgeScore) {
-            row.push(judgeScore.weightedScore.toString());
-          } else {
-            row.push(""); // Empty cell for missing judge score
-          }
-        });
-      }
-      
-      // Add average score
-      row.push(result.averageScore ? result.averageScore.toString() : "");
-      
-      csvContent += row.join(",") + "\r\n";
-    });
-    
-    // Create and trigger download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `jury-results-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
   
   // Render loading state
@@ -218,7 +153,7 @@ export default function JuryResultsPage() {
       <div className="flex-1 p-4">
         <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center max-w-md mx-auto">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Loading Jury Results</h2>
+          <h2 className="text-xl font-semibold mb-2 text-black">Loading Jury Results</h2>
           <p className="text-gray-600">Please wait while we fetch and compile the data...</p>
         </div>
       </div>
@@ -243,7 +178,7 @@ export default function JuryResultsPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="flex-1 overflow-auto p-4 bg-gray-50">
       <div className="max-w-full mx-auto">
@@ -255,9 +190,9 @@ export default function JuryResultsPage() {
                 <Trophy className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Jury Evaluation Results</h1>
+                <h1 className="text-xl font-bold text-gray-900">Competition Final Results</h1>
                 <p className="text-gray-600 text-sm">
-                  Complete results from all judges' evaluations of the final submissions
+                  Transparent scoring breakdown from all judges across all criteria
                 </p>
               </div>
             </div>
@@ -272,343 +207,139 @@ export default function JuryResultsPage() {
               </Link>
               
               <button
-                onClick={toggleCriteria}
+                onClick={handlePrint}
                 className="inline-flex items-center gap-1 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-blue-700 hover:bg-blue-100 transition-colors"
               >
-                <ArrowLeftRight className="h-4 w-4" />
-                <span>{showCriteria ? "Show Totals Only" : "Show All Criteria"}</span>
+                <Printer className="h-4 w-4" />
+                <span>Print Results</span>
               </button>
               
               <button
-                onClick={toggleSortBy}
-                className="inline-flex items-center gap-1 px-3 py-2 bg-purple-50 border border-purple-200 rounded-md text-purple-700 hover:bg-purple-100 transition-colors"
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-1 px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-gray-700 hover:bg-gray-200 transition-colors"
               >
-                <ArrowUpDown className="h-4 w-4" />
-                <span>Sort by {sortBy === "score" ? "Rank" : "Score"}</span>
-              </button>
-              
-              <button
-                onClick={exportToExcel}
-                className="inline-flex items-center gap-1 px-3 py-2 bg-green-600 rounded-md text-white hover:bg-green-700 transition-colors"
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                <span>Export to Excel</span>
+                <RefreshCw className="h-4 w-4" />
+                <span>Refresh Data</span>
               </button>
             </div>
           </div>
         </div>
         
-        {/* Info card */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-start">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0 mr-3" />
+        {/* Info card for judges */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="bg-blue-100 p-2 rounded-full">
+              <Users className="h-5 w-5 text-blue-600" />
+            </div>
             <div>
-              <h3 className="font-semibold text-blue-800 mb-1">About Judging Criteria</h3>
-              <p className="text-blue-700 text-sm">
-                Submissions were evaluated on four criteria with different weights:
-                <span className="font-medium"> Design Content (40%), Color Application (30%), 
-                Technical Content (20%), and Innovative Solution (10%)</span>.
-                The weighted total is out of 100 points.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* No results message */}
-        {results.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Judge Evaluations Yet</h3>
-            <p className="text-gray-600 mb-4">
-              There are no jury evaluations recorded for any finalist submissions yet.
-            </p>
-            <Link 
-              href="/admin/winners"
-              className="px-4 py-2 bg-primary text-white rounded-md inline-block font-medium"
-            >
-              Go to Jury Scoring
-            </Link>
-          </div>
-        ) : (
-          /* Results table */
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table ref={tableRef} className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                      Rank
-                    </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Submission
-                    </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    
-                    {showCriteria ? (
-                      // Show detailed criteria columns for each judge
-                      judges.map(judge => (
-                        <React.Fragment key={judge.id}>
-                          <th scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-l border-gray-200">
-                            <div className="truncate max-w-[100px] mx-auto">{judge.name}</div>
-                            <div className="text-blue-600 text-[10px] normal-case font-normal">Design (40%)</div>
-                          </th>
-                          <th scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-                            <div className="truncate max-w-[100px] mx-auto">{judge.name}</div>
-                            <div className="text-blue-600 text-[10px] normal-case font-normal">Color (30%)</div>
-                          </th>
-                          <th scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-                            <div className="truncate max-w-[100px] mx-auto">{judge.name}</div>
-                            <div className="text-blue-600 text-[10px] normal-case font-normal">Tech (20%)</div>
-                          </th>
-                          <th scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-                            <div className="truncate max-w-[100px] mx-auto">{judge.name}</div>
-                            <div className="text-blue-600 text-[10px] normal-case font-normal">Innov (10%)</div>
-                          </th>
-                          <th scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
-                            <div className="truncate max-w-[100px] mx-auto">{judge.name}</div>
-                            <div className="text-blue-600 text-[10px] normal-case font-normal">Total</div>
-                          </th>
-                        </React.Fragment>
-                      ))
-                    ) : (
-                      // Show just total score for each judge
-                      judges.map(judge => (
-                        <th key={judge.id} scope="col" className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 border-x border-gray-200">
-                          <div className="truncate max-w-[100px] mx-auto">{judge.name}</div>
-                        </th>
-                      ))
-                    )}
-                    
-                    <th scope="col" className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50 border-l border-gray-200">
-                      <div className="flex items-center justify-center gap-1">
-                        <BarChart2 className="h-3 w-3" />
-                        <span>Average</span>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {results.map((result, index) => (
-                    <React.Fragment key={result.id}>
-                      <tr 
-                        className={`hover:bg-gray-50 cursor-pointer ${
-                          index < 3 ? 'bg-yellow-50/30' : ''
-                        }`}
-                        onClick={() => toggleDetails(result.id)}
-                      >
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                            index === 0 ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
-                            index === 1 ? 'bg-gray-100 text-gray-800 border border-gray-300' :
-                            index === 2 ? 'bg-amber-100 text-amber-800 border border-amber-300' :
-                            'bg-white text-gray-800 border border-gray-300'
-                          }`}>
-                            {index === 0 ? (
-                              <Trophy className="h-4 w-4" />
-                            ) : index === 1 || index === 2 ? (
-                              <Medal className="h-4 w-4" />
-                            ) : (
-                              <span className="text-sm font-medium">{index + 1}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 text-sm">
-                          <div className="flex items-center">
-                            <div className="font-medium text-gray-900">
-                              {result.title}
-                            </div>
-                            <button 
-                              className="ml-2 text-gray-400 hover:text-gray-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDetails(result.id);
-                              }}
-                            >
-                              {showDetails[result.id] ? (
-                                <ChevronUp className="h-4 w-4" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ID: {result.submissionNumber}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {result.categoryName}
-                          </span>
-                        </td>
-                        
-                        {showCriteria ? (
-                          // Show detailed criteria scores for each judge
-                          result.judgeScores.map((judgeScore, judgeIndex) => (
-                            <React.Fragment key={`judge-${judgeIndex}`}>
-                              <td className="px-2 py-3 text-center whitespace-nowrap border-l border-gray-200 bg-blue-50/40">
-                                {judgeScore ? (
-                                  <span className="text-sm font-medium">{judgeScore.score1}</span>
-                                ) : (
-                                  <span className="text-sm text-gray-400">-</span>
-                                )}
-                              </td>
-                              <td className="px-2 py-3 text-center whitespace-nowrap bg-blue-50/40">
-                                {judgeScore ? (
-                                  <span className="text-sm font-medium">{judgeScore.score2}</span>
-                                ) : (
-                                  <span className="text-sm text-gray-400">-</span>
-                                )}
-                              </td>
-                              <td className="px-2 py-3 text-center whitespace-nowrap bg-blue-50/40">
-                                {judgeScore ? (
-                                  <span className="text-sm font-medium">{judgeScore.score3}</span>
-                                ) : (
-                                  <span className="text-sm text-gray-400">-</span>
-                                )}
-                              </td>
-                              <td className="px-2 py-3 text-center whitespace-nowrap bg-blue-50/40">
-                                {judgeScore ? (
-                                  <span className="text-sm font-medium">{judgeScore.score4}</span>
-                                ) : (
-                                  <span className="text-sm text-gray-400">-</span>
-                                )}
-                              </td>
-                              <td className="px-2 py-3 text-center whitespace-nowrap font-medium border-r border-gray-200 bg-blue-50/40">
-                                {judgeScore ? (
-                                  <span className="text-blue-700">{judgeScore.weightedScore}</span>
-                                ) : (
-                                  <span className="text-gray-400">-</span>
-                                )}
-                              </td>
-                            </React.Fragment>
-                          ))
-                        ) : (
-                          // Show just total score for each judge
-                          result.judgeScores.map((judgeScore, judgeIndex) => (
-                            <td key={`judge-${judgeIndex}`} className="px-3 py-3 text-center whitespace-nowrap font-medium border-x border-gray-200 bg-gray-50/40">
-                              {judgeScore ? (
-                                <span className="text-blue-700">{judgeScore.weightedScore}</span>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </td>
-                          ))
-                        )}
-                        
-                        <td className="px-3 py-3 text-center whitespace-nowrap border-l border-gray-200 bg-yellow-50/50">
-                          {result.averageScore !== null ? (
-                            <div className={`text-base font-bold ${
-                              index === 0 ? 'text-yellow-700' :
-                              index === 1 ? 'text-gray-700' :
-                              index === 2 ? 'text-amber-700' :
-                              'text-blue-700'
-                            }`}>
-                              {result.averageScore.toFixed(1)}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                      </tr>
-                      
-                      {/* Expanded details row */}
-                      {showDetails[result.id] && (
-                        <tr className="bg-gray-50">
-                          <td colSpan={showCriteria ? 3 + (judges.length * 5) + 1 : 3 + judges.length + 1} className="p-4 border-t border-gray-200">
-                            <div className="max-w-4xl mx-auto">
-                              <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                                <Calculator className="h-4 w-4 mr-1" />
-                                Score Breakdown for {result.title}
-                              </h3>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Score breakdown for each judge */}
-                                {result.judgeScores.map((judgeScore, idx) => {
-                                  if (!judgeScore) return null;
-                                  
-                                  return (
-                                    <div key={idx} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                                      <div className="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
-                                        <span className="font-medium text-gray-700">{judgeScore.juryName}</span>
-                                        <span className="text-sm bg-blue-100 px-2 py-0.5 rounded-full text-blue-800 font-medium">
-                                          Total: {judgeScore.weightedScore}
-                                        </span>
-                                      </div>
-                                      <div className="p-3">
-                                        <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                                          <div className="text-gray-600">Design Content (40%):</div>
-                                          <div className="font-medium text-gray-800">{judgeScore.score1} × 4 = {judgeScore.score1 * 4}</div>
-                                          
-                                          <div className="text-gray-600">Color Application (30%):</div>
-                                          <div className="font-medium text-gray-800">{judgeScore.score2} × 3 = {judgeScore.score2 * 3}</div>
-                                          
-                                          <div className="text-gray-600">Tech. Content (20%):</div>
-                                          <div className="font-medium text-gray-800">{judgeScore.score3} × 2 = {judgeScore.score3 * 2}</div>
-                                          
-                                          <div className="text-gray-600">Innovative Sol. (10%):</div>
-                                          <div className="font-medium text-gray-800">{judgeScore.score4} × 1 = {judgeScore.score4 * 1}</div>
-                                        </div>
-                                        
-                                        {judgeScore.comments && (
-                                          <div className="mt-2 text-xs">
-                                            <div className="font-medium text-gray-700 mb-1">Comments:</div>
-                                            <div className="p-2 bg-gray-50 rounded border border-gray-200 text-gray-700">
-                                              {judgeScore.comments}
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Summary footer */}
-            <div className="bg-amber-50 p-4 border-t border-amber-200">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-amber-500" />
-                  <span className="text-amber-800 font-medium">
-                    {results.length} finalists scored by {judges.length} judges
-                  </span>
-                </div>
-                
-                <div className="flex gap-2 items-center">
-                  <span className="text-sm text-gray-600">
-                    First place average score: {results[0]?.averageScore?.toFixed(1) || "N/A"}
-                  </span>
-                  
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    <span>Refresh</span>
-                  </button>
-                  
-                  <button
-                    onClick={exportToExcel}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 rounded-md text-white hover:bg-green-700 transition-colors text-sm"
-                  >
-                    <Download className="h-3 w-3" />
-                    <span>Export</span>
-                  </button>
-                </div>
+              <h2 className="font-semibold text-gray-900 mb-1">Judging Panel</h2>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {judges.map((judge, index) => (
+                  <div key={judge.id} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm">
+                    Judge {index + 1}: {judge.name}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        )}
+        </div>
+        
+        {/* Main results component */}
+        <div ref={printRef}>
+          {results.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+              <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Available</h3>
+              <p className="text-gray-600 mb-4">
+                There are no jury evaluations recorded for any finalist submissions yet.
+              </p>
+              <Link 
+                href="/admin/winners"
+                className="px-4 py-2 bg-primary text-white rounded-md inline-block font-medium"
+              >
+                Go to Jury Scoring
+              </Link>
+            </div>
+                  )
+                      : (
+                          
+            <EnhancedJudgingResults 
+              results={results}
+              judges={judges}
+            />
+          )}
+          
+          {/* Legend for printed version */}
+          {showLegend && results.length > 0 && (
+            <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Info className="h-5 w-5 text-blue-500" />
+                  Scoring Legend & Methodology
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Criteria Weighting</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between p-2 bg-blue-50 rounded-md">
+                      <span className="text-sm font-medium text-black">Design Content:</span>
+                      <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">40% weight</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-blue-50 rounded-md">
+                      <span className="text-sm font-medium text-black">Color Application:</span>
+                      <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">30% weight</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-blue-50 rounded-md">
+                      <span className="text-sm font-medium text-black">Technological Content:</span>
+                      <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">20% weight</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-blue-50 rounded-md">
+                      <span className="text-sm font-medium text-black">Innovative Solution:</span>
+                      <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">10% weight</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      Each criterion is scored on a scale of 1-10, then multiplied by its weight factor.
+                      This gives a maximum possible score of 100 points per judge.
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Score Color Coding</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 bg-green-100 text-green-800 rounded-md text-sm">
+                      <span className="font-medium">90-100 points:</span> Excellent
+                    </div>
+                    <div className="p-2 bg-blue-100 text-blue-800 rounded-md text-sm">
+                      <span className="font-medium">80-89 points:</span> Great
+                    </div>
+                    <div className="p-2 bg-yellow-100 text-yellow-800 rounded-md text-sm">
+                      <span className="font-medium">70-79 points:</span> Good
+                    </div>
+                    <div className="p-2 bg-orange-100 text-orange-800 rounded-md text-sm">
+                      <span className="font-medium">60-69 points:</span> Average
+                    </div>
+                    <div className="p-2 bg-red-50 text-red-600 rounded-md text-sm col-span-2">
+                      <span className="font-medium">Below 60 points:</span> Below Average
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      The average score is calculated by taking the mean of all judges'
+                      total scores for each submission. Rankings are determined by these average scores.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

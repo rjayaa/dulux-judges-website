@@ -84,6 +84,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: "/admin/winners",
       icon: Medal,
       current: pathname === "/admin/winners"
+    },
+     {
+      name: "Final Results",
+      href: "/admin/winners/results",
+      icon: BarChart2,
+      current: pathname === "/admin/winners/results"
     }
     // Additional pages can be added here when they're implemented
   ];

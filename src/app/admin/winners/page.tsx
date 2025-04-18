@@ -592,7 +592,7 @@ export default function AdminFinalistScoringPage() {
               </div>
               
               {/* Judges' scores table */}
-              {selectedFinalist.judges.length > 0 && (
+             {selectedFinalist.judges.length > 0 && (
                 <div className="p-4 border-b border-gray-200 bg-primary/5">
                   <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
                     <Users className="h-4 w-4 mr-1" />
@@ -635,16 +635,28 @@ export default function AdminFinalistScoringPage() {
                                 {judgeScore.name}
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
-                                {judgeScore.scores.score1}
+                                <div className="flex flex-col">
+                                  <span className="text-gray-800">{judgeScore.scores.score1}</span>
+                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score1) * 4})</span>
+                                </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
-                                {judgeScore.scores.score2}
+                                <div className="flex flex-col">
+                                  <span className="text-gray-800">{judgeScore.scores.score2}</span>
+                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score2) * 3})</span>
+                                </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
-                                {judgeScore.scores.score3}
+                                <div className="flex flex-col">
+                                  <span className="text-gray-800">{judgeScore.scores.score3}</span>
+                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score3) * 2})</span>
+                                </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
-                                {judgeScore.scores.score4}
+                                <div className="flex flex-col">
+                                  <span className="text-gray-800">{judgeScore.scores.score4}</span>
+                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score4) * 1})</span>
+                                </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center font-medium text-primary">
                                 {totalScore}
