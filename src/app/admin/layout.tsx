@@ -1,4 +1,4 @@
-// src/components/admin/AdminLayout.tsx
+// src/app/admin/layout.tsx
 "use client";
 
 import { ReactNode, useState, useEffect } from "react";
@@ -13,7 +13,9 @@ import {
   Home,
   Trophy,
   FileText,
-  BarChart2
+  BarChart2,
+  Medal,
+  Menu
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -23,6 +25,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   
@@ -68,20 +71,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
   
-  // Navigation items
+  // Navigation items - only keep pages that exist
   const navigationItems = [
-    {
-      name: "Dashboard",
-      href: "/admin/dashboard",
-      icon: Home,
-      current: pathname === "/admin/dashboard"
-    },
-    {
-      name: "Submissions",
-      href: "/admin/submissions",
-      icon: FileText,
-      current: pathname === "/admin/submissions"
-    },
     {
       name: "Top 5 Selections",
       href: "/admin/top-five",
@@ -89,24 +80,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       current: pathname === "/admin/top-five"
     },
     {
-      name: "Judges",
-      href: "/admin/judges",
-      icon: Users,
-      current: pathname === "/admin/judges"
-    },
-    {
-      name: "Analytics",
-      href: "/admin/analytics",
-      icon: BarChart2,
-      current: pathname === "/admin/analytics"
-    },
-    {
-      name: "Settings",
-      href: "/admin/settings",
-      icon: Settings,
-      current: pathname === "/admin/settings"
+      name: "Winners",
+      href: "/admin/winners",
+      icon: Medal,
+      current: pathname === "/admin/winners"
     }
+    // Additional pages can be added here when they're implemented
   ];
+  
+  // Toggle sidebar on mobile
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
   
   // If loading, show skeleton
   if (isLoading) {
@@ -143,7 +128,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
   
-  // Main admin layout
+  // Main admin layout with proper sidebar
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Top navigation bar */}
@@ -151,6 +136,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
+              <button
+                className="md:hidden p-2 mr-2 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+                onClick={toggleSidebar}
+              >
+                <Menu className="h-6 w-6" />
+              </button>
               <div className="flex-shrink-0 flex items-center">
                 <Image
                   src="/favicon.ico"
@@ -173,6 +164,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <button
                 onClick={handleLogout}
                 className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-md"
+                title="Logout"
               >
                 <LogOut className="h-5 w-5" />
               </button>
@@ -181,9 +173,74 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </header>
       
-      {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        {children}
+      {/* Main content with sidebar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar - hidden on mobile unless toggled */}
+        <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block md:flex-shrink-0 bg-white z-20 border-r border-gray-200 transition-all duration-300 ${
+          sidebarOpen ? 'absolute md:relative inset-y-0 left-0 w-64 md:w-64' : 'w-0'
+        }`}>
+          <div className="flex flex-col h-full">
+            {/* Close button - only on mobile */}
+            <div className="md:hidden p-4 flex justify-end">
+              <button
+                onClick={toggleSidebar}
+                className="p-2 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Navigation */}
+            <nav className="flex-1 px-4 pb-4 space-y-1 overflow-y-auto">
+              <div className="pt-4 pb-2 mb-4 border-b border-gray-200">
+                <div className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Admin Navigation
+                </div>
+              </div>
+              
+              {navigationItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                    item.current
+                      ? 'bg-primary text-white'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                  onClick={() => {
+                    // Close sidebar on mobile when navigating
+                    if (window.innerWidth < 768) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                >
+                  <item.icon
+                    className={`mr-3 flex-shrink-0 h-5 w-5 ${
+                      item.current ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  {item.name}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+        
+        {/* Mobile overlay when sidebar is open */}
+        {sidebarOpen && (
+          <div 
+            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-10"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+        )}
+        
+        {/* Page content */}
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
       </div>
     </div>
   );
