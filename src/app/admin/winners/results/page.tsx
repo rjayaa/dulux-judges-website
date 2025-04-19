@@ -287,17 +287,32 @@ export default function EnhancedResultsPage() {
                       <span className="text-sm font-medium text-black">Design Content:</span>
                       <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">40% weight</span>
                     </div>
+                    <div className="mt-1 text-sm text-gray-800 px-2 font-medium">
+                      Penilaian secara kualitatif pada aspek lokalitas maupun modern pada elemen desain. Penilaian secara kuantitatif pada konten, bangunan hijau, kesehatan, efektifitas dan efisien, kepraktisan dan menimbulkan rasa kebahagiaan.
+                    </div>
+                    
                     <div className="flex justify-between p-2 bg-blue-50 rounded-md">
                       <span className="text-sm font-medium text-black">Color Application:</span>
                       <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">30% weight</span>
                     </div>
+                    <div className="mt-1 text-sm text-gray-800 px-2 font-medium">
+                      Fokus utama pada penggunaan True Joys sebagai warna dominan dan bagaimana kombinasi dengan palet lainnya menciptakan atmosfer yang harmonis dan menginspirasi.
+                    </div>
+                    
                     <div className="flex justify-between p-2 bg-blue-50 rounded-md">
                       <span className="text-sm font-medium text-black">Technological Content:</span>
                       <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">20% weight</span>
                     </div>
+                    <div className="mt-1 text-sm text-gray-800 px-2 font-medium">
+                      Teknik, kompetensi, alat konstruksi, material, dan metode konstruksi.
+                    </div>
+                    
                     <div className="flex justify-between p-2 bg-blue-50 rounded-md">
                       <span className="text-sm font-medium text-black">Innovative Solution:</span>
                       <span className="text-sm bg-blue-100 px-2 py-0.5 rounded text-blue-800">10% weight</span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-800 px-2 font-medium">
+                      Kombinasi dari Konten Kualitatif, Kuantitatif, Teknologi, dan Aplikasi warna dalam kreasi dan solusi unik.
                     </div>
                   </div>
                   
@@ -309,23 +324,23 @@ export default function EnhancedResultsPage() {
                   </div>
                 </div>
                 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Score Color Coding</h4>
+                {/* <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Score Ranges</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 bg-green-100 text-green-800 rounded-md text-sm">
-                      <span className="font-medium">90-100 points:</span> Excellent
+                    <div className="p-2 bg-gray-50 text-gray-800 rounded-md text-sm">
+                      <span className="font-medium">90-100 points</span>
                     </div>
-                    <div className="p-2 bg-blue-100 text-blue-800 rounded-md text-sm">
-                      <span className="font-medium">80-89 points:</span> Great
+                    <div className="p-2 bg-gray-50 text-gray-800 rounded-md text-sm">
+                      <span className="font-medium">80-89 points</span>
                     </div>
-                    <div className="p-2 bg-yellow-100 text-yellow-800 rounded-md text-sm">
-                      <span className="font-medium">70-79 points:</span> Good
+                    <div className="p-2 bg-gray-50 text-gray-800 rounded-md text-sm">
+                      <span className="font-medium">70-79 points</span>
                     </div>
-                    <div className="p-2 bg-orange-100 text-orange-800 rounded-md text-sm">
-                      <span className="font-medium">60-69 points:</span> Average
+                    <div className="p-2 bg-gray-50 text-gray-800 rounded-md text-sm">
+                      <span className="font-medium">60-69 points</span>
                     </div>
-                    <div className="p-2 bg-red-50 text-red-600 rounded-md text-sm col-span-2">
-                      <span className="font-medium">Below 60 points:</span> Below Average
+                    <div className="p-2 bg-gray-50 text-gray-800 rounded-md text-sm col-span-2">
+                      <span className="font-medium">Below 60 points</span>
                     </div>
                   </div>
                   
@@ -335,7 +350,7 @@ export default function EnhancedResultsPage() {
                       total scores for each submission. Rankings are determined by these average scores.
                     </p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           )}

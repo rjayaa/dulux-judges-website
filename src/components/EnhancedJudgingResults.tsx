@@ -211,47 +211,9 @@ export default function EnhancedJudgingResults({ results, judges }: EnhancedJudg
   
   // Render color-coded score cell
   const renderScoreCell = (score: number, isTotal: boolean = false) => {
-    let bgColor = "bg-gray-50";
-    let textColor = "text-gray-800";
-    
-    // Color code based on score range for better visualization
-    if (isTotal) {
-      // For total weighted scores (out of 100)
-      if (score >= 90) {
-        bgColor = "bg-green-100";
-        textColor = "text-green-800";
-      } else if (score >= 80) {
-        bgColor = "bg-blue-100";
-        textColor = "text-blue-800";
-      } else if (score >= 70) {
-        bgColor = "bg-yellow-100";
-        textColor = "text-yellow-800";
-      } else if (score >= 60) {
-        bgColor = "bg-orange-100";
-        textColor = "text-orange-800";
-      } else {
-        bgColor = "bg-red-50";
-        textColor = "text-red-600";
-      }
-    } else {
-      // For individual criterion scores (out of 10)
-      if (score >= 9) {
-        bgColor = "bg-green-100";
-        textColor = "text-green-800";
-      } else if (score >= 8) {
-        bgColor = "bg-blue-100";
-        textColor = "text-blue-800";
-      } else if (score >= 7) {
-        bgColor = "bg-yellow-100";
-        textColor = "text-yellow-800";
-      } else if (score >= 6) {
-        bgColor = "bg-orange-100";
-        textColor = "text-orange-800";
-      } else {
-        bgColor = "bg-red-50";
-        textColor = "text-red-600";
-      }
-    }
+    // Use neutral colors for all scores
+    const bgColor = "bg-gray-50";
+    const textColor = "text-gray-900";
     
     return (
       <div className={`px-2 py-1 rounded-md ${bgColor} ${textColor} font-semibold text-center`}>
@@ -588,7 +550,7 @@ export default function EnhancedJudgingResults({ results, judges }: EnhancedJudg
             </span>
           </div>
           
-          <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+          {/* <div className="flex flex-wrap gap-3 text-sm text-gray-600">
             <div className="px-2 py-1 bg-green-100 text-green-800 rounded-md flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-green-800"></span>
               90-100: Excellent
@@ -609,7 +571,7 @@ export default function EnhancedJudgingResults({ results, judges }: EnhancedJudg
               <span className="w-2 h-2 rounded-full bg-red-600"></span>
               60: Below Average
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
