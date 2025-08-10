@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentJudge, isAdmin } from "@/lib/auth";
 import pool from "@/lib/db";
+import fs from "fs";
+import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
       FROM 
         TopFiveSelections t
       JOIN 
-        SubmissionValid s ON t.submissionId = s.id
+        Submission s ON t.submissionId = s.id
       JOIN 
         Category c ON s.categoryId = c.id
       ORDER BY 
@@ -71,12 +73,28 @@ export async function GET(request: NextRequest) {
         fs.juryId, t.rank ASC
     `);
     
-    // Format the data
+    // Format the data with local files
     const formattedFinalists = (finalists as any[]).map(finalist => {
       // Get scores for this finalist
       const finalistScores = (allScores as any[]).filter(s => 
         s.submissionId === finalist.submissionId
       );
+      
+      // Get local files from public/hasil_submission/{submissionId}/
+      let localFiles: string[] = [];
+      if (finalist.submissionNumber) {
+        const submissionFolder = path.join(process.cwd(), 'public', 'hasil_submission', finalist.submissionNumber);
+        try {
+          if (fs.existsSync(submissionFolder)) {
+            const files = fs.readdirSync(submissionFolder);
+            localFiles = files
+              .filter(file => file.endsWith('.pdf')) // Only PDF files
+              .map(file => `/hasil_submission/${finalist.submissionNumber}/${file}`);
+          }
+        } catch (error) {
+          console.warn(`Could not read files for finalist ${finalist.submissionNumber}:`, error);
+        }
+      }
       
       return {
         id: finalist.submissionId,
@@ -88,8 +106,8 @@ export async function GET(request: NextRequest) {
         categoryName: finalist.categoryName,
         submittedAt: finalist.submittedAt.toString(),
         submissionType: finalist.submissionType || "INDIVIDUAL",
-        submissionFile: finalist.submissionFile,
-        submissionFiles: finalist.submissionFiles ? JSON.parse(finalist.submissionFiles) : [],
+        submissionFile: localFiles[0] || "", // Use first local file or empty string
+        submissionFiles: localFiles, // Use local files instead of S3
         judges: finalistScores.map(score => ({
           id: score.juryId,
           name: score.juryName,

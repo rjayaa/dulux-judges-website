@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentJudge } from "@/lib/auth";
 import pool from "@/lib/db";
+import fs from "fs";
+import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,17 +21,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const categoryId = searchParams.get("categoryId");
     
-    // Base query for submissions
+    // Base query for submissions with new categories
     let submissionsQuery = `
       SELECT s.*, c.name as categoryName
-      FROM SubmissionValid s
+      FROM Submission s
       JOIN Category c ON s.categoryId = c.id
-      WHERE s.status = 'SUBMITTED' AND s.isActive = 1
+      WHERE s.categoryId IN (
+        "cm6v78vcq0004i0hygkb72no8", 
+        "cm6v78vcr0005i0hylhqh6cua", 
+        "cm6v78vcs0006i0hyeillv4p2", 
+        "cm6v78vct0007i0hybnag0u2p", 
+        "cm6v78vct0008i0hyfv0pkxc5", 
+        "cm6v78vct0009i0hyq3qid6bl"
+      ) AND s.status = "SUBMITTED" AND s.isActive = 1
     `;
     
     const queryParams: any[] = [];
     
-    // Add category filter if provided
+    // Add category filter if provided (additional filter on top of the base categories)
     if (categoryId && categoryId !== "all") {
       submissionsQuery += " AND s.categoryId = ?";
       queryParams.push(categoryId);
@@ -50,6 +59,22 @@ export async function GET(request: NextRequest) {
     const submissionsWithEvaluations = (submissions as any[]).map(submission => {
       const evaluation = (evaluations as any[]).find(e => e.submissionId === submission.id);
       
+      // Get local files from public/hasil_submission/{submissionId}/
+      let localFiles: string[] = [];
+      if (submission.submissionId) {
+        const submissionFolder = path.join(process.cwd(), 'public', 'hasil_submission', submission.submissionId);
+        try {
+          if (fs.existsSync(submissionFolder)) {
+            const files = fs.readdirSync(submissionFolder);
+            localFiles = files
+              .filter(file => file.endsWith('.pdf')) // Only PDF files
+              .map(file => `/hasil_submission/${submission.submissionId}/${file}`);
+          }
+        } catch (error) {
+          console.warn(`Could not read files for submission ${submission.submissionId}:`, error);
+        }
+      }
+      
       return {
         id: submission.id,
         title: submission.title,
@@ -60,8 +85,8 @@ export async function GET(request: NextRequest) {
         categoryName: submission.categoryName,
         submissionId: submission.submissionId || "",
         submissionType: submission.submissionType || "INDIVIDUAL",
-        submissionFile: submission.submissionFile,
-        submissionFiles: submission.submissionFiles ? JSON.parse(submission.submissionFiles) : [],
+        submissionFile: localFiles[0] || "", // Use first local file or empty string
+        submissionFiles: localFiles, // Use local files instead of S3
         evaluated: !!evaluation,
         comment: evaluation?.comments || "",
         ...(evaluation?.evaluationMethod === "scoring" ? {

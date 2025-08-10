@@ -63,6 +63,7 @@ export default function SubmissionsPage() {
   const evaluationMethod = searchParams.get("method") || "checkbox";
   
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [filterCategory, setFilterCategory] = useState<string | "all">("all");
@@ -105,28 +106,20 @@ export default function SubmissionsPage() {
         const data = await response.json();
         
         if (data.success) {
-          // Add category names to submissions
-          const submissionsWithCategories = data.submissions.map((sub: Submission) => {
-            // const category = mockCategories.find(cat => cat.id === sub.categoryId);
-            return {
-              ...sub,
-              // categoryName: category ? category.name : 'Uncategorized'
-              categoryName:  'City Project'
-            };
-          });
-          
-          setSubmissions(submissionsWithCategories);
+          // Set submissions and categories from API
+          setSubmissions(data.submissions);
+          setCategories(data.categories || []);
           
           // Count already evaluated submissions
-          const evaluatedCount = submissionsWithCategories.filter((sub: Submission) => sub.evaluated).length;
+          const evaluatedCount = data.submissions.filter((sub: Submission) => sub.evaluated).length;
           setEvaluationCount(evaluatedCount);
           
           // Reset pagination when filter changes
           setCurrentPage(1);
           
           // Select first submission if none is selected
-          if (!selectedSubmission && submissionsWithCategories.length > 0) {
-            setSelectedSubmission(submissionsWithCategories[0]);
+          if (!selectedSubmission && data.submissions.length > 0) {
+            setSelectedSubmission(data.submissions[0]);
           }
           
         } else {
@@ -951,6 +944,7 @@ export default function SubmissionsPage() {
     isLoading={isLoading}
     filterCategory={filterCategory}
     setFilterCategory={setFilterCategory}
+    categories={categories}
   />
 </div>
       

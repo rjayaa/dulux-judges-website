@@ -8,7 +8,8 @@ const ImprovedSidebar = ({
   onSelectSubmission, 
   isLoading, 
   filterCategory, 
-  setFilterCategory 
+  setFilterCategory,
+  categories = [] // Add categories prop
 }) => {
   // States
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,8 +80,26 @@ const ImprovedSidebar = ({
 
   return (
     <div className="bg-white h-full flex flex-col">
-      {/* Search bar */}
-      <div className="p-4 border-b border-gray-200">
+      {/* Search bar and filters */}
+      <div className="p-4 border-b border-gray-200 space-y-3">
+        {/* Category Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-800 text-sm"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Search bar */}
         <div className="relative">
           <input
             type="text"

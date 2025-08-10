@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentJudge, isAdmin } from "@/lib/auth";
 import pool from "@/lib/db";
+import fs from "fs";
+import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,20 +22,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const categoryId = searchParams.get("categoryId");
     
-    // Build query with optional category filter
+    // Build query with new category filter and submission requirements
     let query = `
       SELECT 
         s.*,
         c.name as categoryName,
         (t.id IS NOT NULL) as isTopFive
       FROM 
-        SubmissionValid s
+        Submission s
       JOIN 
         Category c ON s.categoryId = c.id
       LEFT JOIN 
         TopFiveSelections t ON s.id = t.submissionId
       WHERE 
-        s.status = 'SUBMITTED' AND s.isActive = 1
+        s.categoryId IN (
+          "cm6v78vcq0004i0hygkb72no8", 
+          "cm6v78vcr0005i0hylhqh6cua", 
+          "cm6v78vcs0006i0hyeillv4p2", 
+          "cm6v78vct0007i0hybnag0u2p", 
+          "cm6v78vct0008i0hyfv0pkxc5", 
+          "cm6v78vct0009i0hyq3qid6bl"
+        ) AND s.status = 'SUBMITTED' AND s.isActive = 1
     `;
     
     const queryParams: any[] = [];
@@ -63,7 +72,7 @@ export async function GET(request: NextRequest) {
       FROM 
         TopFiveSelections t
       JOIN 
-        SubmissionValid s ON t.submissionId = s.id
+        Submission s ON t.submissionId = s.id
       ORDER BY 
         t.rank ASC
     `);
@@ -94,7 +103,7 @@ export async function GET(request: NextRequest) {
       JOIN 
         Jury j ON je.juryId = j.id
       JOIN 
-        SubmissionValid s ON je.submissionId = s.id
+        Submission s ON je.submissionId = s.id
       JOIN 
         Category c ON s.categoryId = c.id
       WHERE 
@@ -104,43 +113,83 @@ export async function GET(request: NextRequest) {
       LIMIT 10
     `);
     
-    // Format submissions 
-    const formattedSubmissions = (submissions as any[]).map(submission => ({
-      id: submission.id,
-      title: submission.title,
-      description: submission.description || "",
-      status: submission.status,
-      submittedAt: submission.createdAt.toString(),
-      categoryId: submission.categoryId,
-      categoryName: submission.categoryName,
-      submissionId: submission.submissionId || "",
-      submissionType: submission.submissionType || "INDIVIDUAL",
-      submissionFile: submission.submissionFile,
-      submissionFiles: submission.submissionFiles ? JSON.parse(submission.submissionFiles) : [],
-      isTopFive: !!submission.isTopFive
-    }));
+    // Format submissions with local files
+    const formattedSubmissions = (submissions as any[]).map(submission => {
+      // Get local files from public/hasil_submission/{submissionId}/
+      let localFiles: string[] = [];
+      if (submission.submissionId) {
+        const submissionFolder = path.join(process.cwd(), 'public', 'hasil_submission', submission.submissionId);
+        try {
+          if (fs.existsSync(submissionFolder)) {
+            const files = fs.readdirSync(submissionFolder);
+            localFiles = files
+              .filter(file => file.endsWith('.pdf')) // Only PDF files
+              .map(file => `/hasil_submission/${submission.submissionId}/${file}`);
+          }
+        } catch (error) {
+          console.warn(`Could not read files for submission ${submission.submissionId}:`, error);
+        }
+      }
+      
+      return {
+        id: submission.id,
+        title: submission.title,
+        description: submission.description || "",
+        status: submission.status,
+        submittedAt: submission.createdAt.toString(),
+        categoryId: submission.categoryId,
+        categoryName: submission.categoryName,
+        submissionId: submission.submissionId || "",
+        submissionType: submission.submissionType || "INDIVIDUAL",
+        submissionFile: localFiles[0] || "", // Use first local file or empty string
+        submissionFiles: localFiles, // Use local files instead of S3
+        isTopFive: !!submission.isTopFive
+      };
+    });
     
-    // Format jury evaluations
-    const formattedEvaluations = (juryEvaluations as any[]).map(evaluation => ({
-      id: evaluation.id,
-      juryId: evaluation.juryId,
-      juryName: evaluation.juryName,
-      submissionId: evaluation.submissionId,
-      submissionTitle: evaluation.submissionTitle,
-      submissionDescription: evaluation.submissionDescription || "",
-      categoryName: evaluation.categoryName,
-      evaluationMethod: evaluation.evaluationMethod,
-      selected: !!evaluation.selected,
-      score1: evaluation.score1,
-      score2: evaluation.score2,
-      score3: evaluation.score3,
-      score4: evaluation.score4,
-      comments: evaluation.comments,
-      isFinalized: !!evaluation.isFinalized,
-      createdAt: evaluation.createdAt.toString(),
-      submissionFile: evaluation.submissionFile,
-      submissionFiles: evaluation.submissionFiles ? JSON.parse(evaluation.submissionFiles) : []
-    }));
+    // Format jury evaluations with local files
+    const formattedEvaluations = (juryEvaluations as any[]).map(evaluation => {
+      // Get local files for evaluation submission
+      let localFiles: string[] = [];
+      
+      // First get the submission to get its submissionId
+      const submission = (submissions as any[]).find(s => s.id === evaluation.submissionId);
+      
+      if (submission && submission.submissionId) {
+        const submissionFolder = path.join(process.cwd(), 'public', 'hasil_submission', submission.submissionId);
+        try {
+          if (fs.existsSync(submissionFolder)) {
+            const files = fs.readdirSync(submissionFolder);
+            localFiles = files
+              .filter(file => file.endsWith('.pdf'))
+              .map(file => `/hasil_submission/${submission.submissionId}/${file}`);
+          }
+        } catch (error) {
+          console.warn(`Could not read files for evaluation submission ${submission.submissionId}:`, error);
+        }
+      }
+      
+      return {
+        id: evaluation.id,
+        juryId: evaluation.juryId,
+        juryName: evaluation.juryName,
+        submissionId: evaluation.submissionId,
+        submissionTitle: evaluation.submissionTitle,
+        submissionDescription: evaluation.submissionDescription || "",
+        categoryName: evaluation.categoryName,
+        evaluationMethod: evaluation.evaluationMethod,
+        selected: !!evaluation.selected,
+        score1: evaluation.score1,
+        score2: evaluation.score2,
+        score3: evaluation.score3,
+        score4: evaluation.score4,
+        comments: evaluation.comments,
+        isFinalized: !!evaluation.isFinalized,
+        createdAt: evaluation.createdAt.toString(),
+        submissionFile: localFiles[0] || "",
+        submissionFiles: localFiles
+      };
+    });
     
     return NextResponse.json({ 
       success: true, 

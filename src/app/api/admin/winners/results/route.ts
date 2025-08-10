@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       FROM 
         TopFiveSelections t
       JOIN 
-        SubmissionValid s ON t.submissionId = s.id
+        Submission s ON t.submissionId = s.id
       JOIN 
         Category c ON s.categoryId = c.id
       ORDER BY 

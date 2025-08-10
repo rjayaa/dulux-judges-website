@@ -10,6 +10,7 @@
 !.yarn/releases
 !.yarn/versions
 
+/public/hasil_submission/*
 # testing
 /coverage
 
