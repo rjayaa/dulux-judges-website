@@ -17,7 +17,6 @@ import {
   Medal,
   Menu,
   Award,
-  List,
   TrendingUp
 } from "lucide-react";
 
@@ -99,13 +98,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       section: "City Project"
     },
     // General Categories Section (Dynamic system)
-    {
-      name: "Manage Selections",
-      href: "/admin/general-categories/selections",
-      icon: List,
-      current: pathname === "/admin/general-categories/selections",
-      section: "General Categories"
-    },
     {
       name: "General Scoring",
       href: "/admin/general-categories",

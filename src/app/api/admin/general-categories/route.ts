@@ -18,12 +18,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const categoryId = searchParams.get("categoryId");
     
-    // Get selected submissions for the category (from GeneralCategorySelections)
-    let finalistsQuery = `
+    // Get all valid submissions for the category (directly from SubmissionValid)
+    let submissionsQuery = `
       SELECT 
-        g.id as generalSelectionId,
-        g.rank,
-        g.submissionId,
+        s.id,
         s.title,
         s.description,
         s.submissionId as submissionNumber,
@@ -34,23 +32,23 @@ export async function GET(request: NextRequest) {
         s.submissionFile,
         s.submissionFiles
       FROM 
-        GeneralCategorySelections g
-      JOIN 
-        SubmissionValid s ON g.submissionId = s.id
+        SubmissionValid s
       JOIN 
         Category c ON s.categoryId = c.id
+      WHERE 
+        s.status = 'SUBMITTED' AND s.isActive = 1
     `;
     
     const queryParams: any[] = [];
     
     if (categoryId && categoryId !== "all") {
-      finalistsQuery += " WHERE g.categoryId = ?";
+      submissionsQuery += " AND s.categoryId = ?";
       queryParams.push(categoryId);
     }
     
-    finalistsQuery += " ORDER BY g.rank ASC";
+    submissionsQuery += " ORDER BY s.createdAt DESC";
     
-    const [finalists] = await pool.query(finalistsQuery, queryParams);
+    const [submissions] = await pool.query(submissionsQuery, queryParams);
     
     // Get available judges
     const [judges] = await pool.query(`
@@ -68,8 +66,8 @@ export async function GET(request: NextRequest) {
       ORDER BY name ASC
     `);
     
-    // Get scores for selected submissions
-    const [scores] = await pool.query(`
+    // Get scores for all submissions in the category
+    let scoresQuery = `
       SELECT 
         gfs.id as finalScoreId,
         gfs.juryId,
@@ -86,23 +84,31 @@ export async function GET(request: NextRequest) {
         GeneralFinalScores gfs
       JOIN
         Jury j ON gfs.juryId = j.id
+      JOIN
+        SubmissionValid s ON gfs.submissionId = s.id
       WHERE 
-        gfs.submissionId IN (
-          SELECT submissionId FROM GeneralCategorySelections
-          ${categoryId && categoryId !== "all" ? "WHERE categoryId = ?" : ""}
-        )
-      ORDER BY
-        j.fullName ASC
-    `, categoryId && categoryId !== "all" ? [categoryId] : []);
+        s.status = 'SUBMITTED' AND s.isActive = 1
+    `;
     
-    // Process the data to create finalists with their judges' scores
-    const processedFinalists = (finalists as any[]).map(finalist => {
-      const finalistScores = (scores as any[]).filter(s => 
-        s.submissionId === finalist.submissionId
+    const scoresQueryParams: any[] = [];
+    
+    if (categoryId && categoryId !== "all") {
+      scoresQuery += " AND gfs.categoryId = ?";
+      scoresQueryParams.push(categoryId);
+    }
+    
+    scoresQuery += " ORDER BY j.fullName ASC";
+    
+    const [scores] = await pool.query(scoresQuery, scoresQueryParams);
+    
+    // Process the data to create submissions with their judges' scores
+    const processedSubmissions = (submissions as any[]).map(submission => {
+      const submissionScores = (scores as any[]).filter(s => 
+        s.submissionId === submission.id
       );
       
       // Map scores to judge format
-      const judgeScores = finalistScores.map(score => ({
+      const judgeScores = submissionScores.map(score => ({
         id: score.juryId,
         name: score.juryName,
         finalScoreId: score.finalScoreId,
@@ -118,24 +124,23 @@ export async function GET(request: NextRequest) {
       }));
       
       return {
-        id: finalist.submissionId,
-        generalSelectionId: finalist.generalSelectionId,
-        title: finalist.title,
-        description: finalist.description || "",
-        submissionNumber: finalist.submissionNumber || "",
-        categoryId: finalist.categoryId,
-        categoryName: finalist.categoryName,
-        submittedAt: finalist.submittedAt?.toString() || "",
-        submissionType: finalist.submissionType || "INDIVIDUAL",
-        submissionFile: finalist.submissionFile,
-        submissionFiles: finalist.submissionFiles ? JSON.parse(finalist.submissionFiles) : [],
+        id: submission.id,
+        title: submission.title,
+        description: submission.description || "",
+        submissionNumber: submission.submissionNumber || "",
+        categoryId: submission.categoryId,
+        categoryName: submission.categoryName,
+        submittedAt: submission.submittedAt?.toString() || "",
+        submissionType: submission.submissionType || "INDIVIDUAL",
+        submissionFile: submission.submissionFile,
+        submissionFiles: submission.submissionFiles ? JSON.parse(submission.submissionFiles) : [],
         judges: judgeScores
       };
     });
     
     return NextResponse.json({ 
       success: true, 
-      finalists: processedFinalists,
+      submissions: processedSubmissions,
       judges: (judges as any[]).map(j => ({ id: j.id, fullName: j.fullName })),
       categories: (categories as any[]).map(c => ({ id: c.id, name: c.name }))
     });

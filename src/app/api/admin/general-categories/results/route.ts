@@ -18,34 +18,34 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const categoryId = searchParams.get("categoryId");
     
-    // Get all submissions from GeneralCategorySelections with more details
-    let finalistsQuery = `
-      SELECT 
-        g.id as generalSelectionId,
-        g.rank,
-        g.submissionId,
+    // Get all submissions that have scores (from GeneralFinalScores)
+    let submissionsQuery = `
+      SELECT DISTINCT
+        s.id,
         s.title,
         s.submissionId as submissionNumber,
         c.name as categoryName,
         s.description
       FROM 
-        GeneralCategorySelections g
-      JOIN 
-        SubmissionValid s ON g.submissionId = s.id
+        SubmissionValid s
       JOIN 
         Category c ON s.categoryId = c.id
+      JOIN
+        GeneralFinalScores gfs ON s.id = gfs.submissionId
+      WHERE 
+        s.status = 'SUBMITTED' AND s.isActive = 1
     `;
     
     const queryParams: any[] = [];
     
     if (categoryId && categoryId !== "all") {
-      finalistsQuery += " WHERE g.categoryId = ?";
+      submissionsQuery += " AND s.categoryId = ?";
       queryParams.push(categoryId);
     }
     
-    finalistsQuery += " ORDER BY g.rank ASC";
+    submissionsQuery += " ORDER BY s.createdAt DESC";
     
-    const [finalists] = await pool.query(finalistsQuery, queryParams);
+    const [submissions] = await pool.query(submissionsQuery, queryParams);
     
     // Get all judges who have provided scores for general categories
     let judgesQuery = `
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       categoryId && categoryId !== "all" ? [categoryId] : []
     );
     
-    // Get all scores for all selected submissions with detailed information
+    // Get all scores for submissions with detailed information
     let scoresQuery = `
       SELECT 
         gfs.id,
@@ -84,14 +84,16 @@ export async function GET(request: NextRequest) {
       JOIN
         Jury j ON gfs.juryId = j.id
       JOIN
-        GeneralCategorySelections g ON gfs.submissionId = g.submissionId
+        SubmissionValid s ON gfs.submissionId = s.id
+      WHERE 
+        s.status = 'SUBMITTED' AND s.isActive = 1
     `;
     
     if (categoryId && categoryId !== "all") {
-      scoresQuery += " WHERE gfs.categoryId = ?";
+      scoresQuery += " AND gfs.categoryId = ?";
     }
     
-    scoresQuery += " ORDER BY g.rank ASC, j.fullName ASC";
+    scoresQuery += " ORDER BY s.createdAt DESC, j.fullName ASC";
     
     const [allScores] = await pool.query(
       scoresQuery,
@@ -112,15 +114,15 @@ export async function GET(request: NextRequest) {
       name: j.name
     }));
     
-    // For each finalist, create an entry with scores from each judge
-    const resultsMatrix = (finalists as any[]).map(finalist => {
-      const finalistScores = (allScores as any[]).filter(s => 
-        s.submissionId === finalist.submissionId
+    // For each submission, create an entry with scores from each judge
+    const resultsMatrix = (submissions as any[]).map(submission => {
+      const submissionScores = (allScores as any[]).filter(s => 
+        s.submissionId === submission.id
       );
       
-      // Map each judge to their scores for this finalist
+      // Map each judge to their scores for this submission
       const judgeScores = judgesToShow.map(judge => {
-        const score = finalistScores.find(s => s.juryId === judge.id);
+        const score = submissionScores.find(s => s.juryId === judge.id);
         if (!score) return null;
         
         // Calculate weighted score
@@ -145,20 +147,19 @@ export async function GET(request: NextRequest) {
         };
       });
       
-      // Calculate average score across all judges who scored this finalist
+      // Calculate average score across all judges who scored this submission
       const validScores = judgeScores.filter(s => s !== null) as any[];
       const avgScore = validScores.length > 0
         ? validScores.reduce((sum, s) => sum + s.weightedScore, 0) / validScores.length
         : null;
       
       return {
-        id: finalist.submissionId,
-        generalSelectionId: finalist.generalSelectionId,
-        rank: finalist.rank,
-        title: finalist.title,
-        submissionNumber: finalist.submissionNumber,
-        categoryName: finalist.categoryName,
-        description: finalist.description,
+        id: submission.id,
+        rank: 0, // No pre-defined rank, will be sorted by average score
+        title: submission.title,
+        submissionNumber: submission.submissionNumber,
+        categoryName: submission.categoryName,
+        description: submission.description,
         judgeScores,
         averageScore: avgScore ? parseFloat(avgScore.toFixed(2)) : null
       };

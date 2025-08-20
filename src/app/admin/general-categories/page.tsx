@@ -49,9 +49,8 @@ interface JudgeScore {
   updatedAt: string;
 }
 
-interface Finalist {
+interface Submission {
   id: string;
-  generalSelectionId: string;
   title: string;
   description: string;
   submissionNumber: string;
@@ -72,11 +71,11 @@ interface Category {
 export default function GeneralCategoriesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [finalists, setFinalists] = useState<Finalist[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [judges, setJudges] = useState<Judge[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(searchParams.get("categoryId") || "all");
-  const [selectedFinalist, setSelectedFinalist] = useState<Finalist | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -126,13 +125,13 @@ export default function GeneralCategoriesPage() {
       const data = await response.json();
       
       if (data.success) {
-        setFinalists(data.finalists);
+        setSubmissions(data.submissions);
         setJudges(data.judges);
         setCategories(data.categories);
         
-        // Set initial selected finalist
-        if (data.finalists.length > 0) {
-          setSelectedFinalist(data.finalists[0]);
+        // Set initial selected submission
+        if (data.submissions.length > 0) {
+          setSelectedSubmission(data.submissions[0]);
         }
         
         // Reset form
@@ -161,8 +160,8 @@ export default function GeneralCategoriesPage() {
     setEditScoreId(null);
   };
   
-  const handleSelectFinalist = (finalist: Finalist) => {
-    setSelectedFinalist(finalist);
+  const handleSelectSubmission = (submission: Submission) => {
+    setSelectedSubmission(submission);
     setCurrentFileIndex(0);
     setShowFullDescription(false);
     setErrorMessage(null);
@@ -209,16 +208,16 @@ export default function GeneralCategoriesPage() {
       
       if (data.success) {
         // Update UI to reflect deletion
-        if (selectedFinalist) {
-          const updatedFinalist = {
-            ...selectedFinalist,
-            judges: selectedFinalist.judges.filter(j => j.finalScoreId !== scoreId)
+        if (selectedSubmission) {
+          const updatedSubmission = {
+            ...selectedSubmission,
+            judges: selectedSubmission.judges.filter(j => j.finalScoreId !== scoreId)
           };
           
-          setSelectedFinalist(updatedFinalist);
+          setSelectedSubmission(updatedSubmission);
           
-          setFinalists(prev => prev.map(f =>
-            f.id === updatedFinalist.id ? updatedFinalist : f
+          setSubmissions(prev => prev.map(f =>
+            f.id === updatedSubmission.id ? updatedSubmission : f
           ));
         }
         
@@ -238,16 +237,16 @@ export default function GeneralCategoriesPage() {
   };
   
   const getCurrentFileUrl = () => {
-    if (!selectedFinalist) return "";
+    if (!selectedSubmission) return "";
     
-    if (selectedFinalist.submissionFile && currentFileIndex === 0) {
-      return selectedFinalist.submissionFile;
+    if (selectedSubmission.submissionFile && currentFileIndex === 0) {
+      return selectedSubmission.submissionFile;
     }
     
-    if (selectedFinalist.submissionFiles && selectedFinalist.submissionFiles.length > 0) {
-      const adjustedIndex = selectedFinalist.submissionFile ? currentFileIndex - 1 : currentFileIndex;
-      if (adjustedIndex >= 0 && adjustedIndex < selectedFinalist.submissionFiles.length) {
-        return selectedFinalist.submissionFiles[adjustedIndex];
+    if (selectedSubmission.submissionFiles && selectedSubmission.submissionFiles.length > 0) {
+      const adjustedIndex = selectedSubmission.submissionFile ? currentFileIndex - 1 : currentFileIndex;
+      if (adjustedIndex >= 0 && adjustedIndex < selectedSubmission.submissionFiles.length) {
+        return selectedSubmission.submissionFiles[adjustedIndex];
       }
     }
     
@@ -255,17 +254,17 @@ export default function GeneralCategoriesPage() {
   };
   
   const getTotalFiles = () => {
-    if (!selectedFinalist) return 0;
+    if (!selectedSubmission) return 0;
     
     let count = 0;
-    if (selectedFinalist.submissionFile) count++;
-    if (selectedFinalist.submissionFiles) count += selectedFinalist.submissionFiles.length;
+    if (selectedSubmission.submissionFile) count++;
+    if (selectedSubmission.submissionFiles) count += selectedSubmission.submissionFiles.length;
     
     return count;
   };
   
   const handleNextFile = () => {
-    if (!selectedFinalist || currentFileIndex >= getTotalFiles() - 1) return;
+    if (!selectedSubmission || currentFileIndex >= getTotalFiles() - 1) return;
     setCurrentFileIndex(prev => prev + 1);
   };
   
@@ -275,26 +274,26 @@ export default function GeneralCategoriesPage() {
     }
   };
   
-  const handleNextFinalist = () => {
-    if (!selectedFinalist) return;
+  const handleNextSubmission = () => {
+    if (!selectedSubmission) return;
     
-    const currentIndex = finalists.findIndex(f => f.id === selectedFinalist.id);
-    if (currentIndex >= 0 && currentIndex < finalists.length - 1) {
-      handleSelectFinalist(finalists[currentIndex + 1]);
+    const currentIndex = submissions.findIndex(f => f.id === selectedSubmission.id);
+    if (currentIndex >= 0 && currentIndex < submissions.length - 1) {
+      handleSelectSubmission(submissions[currentIndex + 1]);
     }
   };
   
-  const handlePrevFinalist = () => {
-    if (!selectedFinalist) return;
+  const handlePrevSubmission = () => {
+    if (!selectedSubmission) return;
     
-    const currentIndex = finalists.findIndex(f => f.id === selectedFinalist.id);
+    const currentIndex = submissions.findIndex(f => f.id === selectedSubmission.id);
     if (currentIndex > 0) {
-      handleSelectFinalist(finalists[currentIndex - 1]);
+      handleSelectSubmission(submissions[currentIndex - 1]);
     }
   };
   
   const handleSaveScores = async () => {
-    if (!selectedFinalist || !selectedJudgeId) {
+    if (!selectedSubmission || !selectedJudgeId) {
       setErrorMessage("Please select a judge");
       return;
     }
@@ -326,11 +325,11 @@ export default function GeneralCategoriesPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          submissionId: selectedFinalist.id,
+          submissionId: selectedSubmission.id,
           juryId: selectedJudgeId,
           scores,
           comments,
-          categoryId: selectedFinalist.categoryId
+          categoryId: selectedSubmission.categoryId
         })
       });
       
@@ -363,30 +362,30 @@ export default function GeneralCategoriesPage() {
           updatedAt: new Date().toISOString()
         };
         
-        // Update the finalist in the state
-        if (selectedFinalist) {
+        // Update the submission in the state
+        if (selectedSubmission) {
           let updatedJudges: JudgeScore[];
           
           if (editMode && editScoreId) {
             // Update existing score
-            updatedJudges = selectedFinalist.judges.map(j =>
+            updatedJudges = selectedSubmission.judges.map(j =>
               j.finalScoreId === editScoreId ? newJudgeScore : j
             );
           } else {
             // Add new score
-            updatedJudges = [...selectedFinalist.judges, newJudgeScore];
+            updatedJudges = [...selectedSubmission.judges, newJudgeScore];
           }
           
-          const updatedFinalist = {
-            ...selectedFinalist,
+          const updatedSubmission = {
+            ...selectedSubmission,
             judges: updatedJudges
           };
           
-          setSelectedFinalist(updatedFinalist);
+          setSelectedSubmission(updatedSubmission);
           
-          // Update in the finalists list
-          setFinalists(prev => prev.map(f =>
-            f.id === updatedFinalist.id ? updatedFinalist : f
+          // Update in the submissions list
+          setSubmissions(prev => prev.map(f =>
+            f.id === updatedSubmission.id ? updatedSubmission : f
           ));
         }
         
@@ -443,7 +442,7 @@ export default function GeneralCategoriesPage() {
   }
   
   // Render error message
-  if (errorMessage && !selectedFinalist) {
+  if (errorMessage && !selectedSubmission) {
     return (
       <div className="flex-1 p-4">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto text-center">
@@ -480,13 +479,6 @@ export default function GeneralCategoriesPage() {
             </div>
             
             <div className="flex gap-2">
-              <Link
-                href="/admin/general-categories/selections"
-                className="inline-flex items-center gap-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Users className="h-4 w-4" />
-                <span>Manage Selections</span>
-              </Link>
               <Link
                 href={`/admin/general-categories/results${selectedCategoryId !== "all" ? `?categoryId=${selectedCategoryId}` : ""}`}
                 className="inline-flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
@@ -544,57 +536,52 @@ export default function GeneralCategoriesPage() {
           </div>
         </div>
         
-        {/* Selected submissions list */}
-        {finalists.length === 0 ? (
+        {/* Available submissions list */}
+        {submissions.length === 0 ? (
           <div className="bg-white p-8 rounded-lg shadow-md text-center">
             <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Submissions Selected Yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Submissions Found</h3>
             <p className="text-gray-600 mb-4">
-              No submissions have been selected for jury evaluation in the chosen category. Please select submissions first.
+              No valid submissions found for the selected category.
+              {selectedCategoryId === "all" ? " Try selecting a specific category." : ""}
             </p>
-            <Link
-              href="/admin/general-categories/selections"
-              className="px-4 py-2 bg-primary text-white rounded-md inline-block font-medium"
-            >
-              Go to Selection Page
-            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            {finalists.map((finalist, index) => (
+            {submissions.map((submission, index) => (
               <div
-                key={finalist.id}
-                onClick={() => handleSelectFinalist(finalist)}
-                className={`bg-white rounded-lg shadow-sm border overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md ${selectedFinalist?.id === finalist.id
+                key={submission.id}
+                onClick={() => handleSelectSubmission(submission)}
+                className={`bg-white rounded-lg shadow-sm border overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md ${selectedSubmission?.id === submission.id
                     ? "ring-2 ring-primary border-primary transform scale-[1.02]"
-                    : finalist.judges.length > 0
+                    : submission.judges.length > 0
                       ? "ring-1 ring-green-500 border-green-200"
                       : "border-gray-200"
                   }`}
               >
                 {/* Submission number */}
-                <div className={`p-2 text-center font-semibold text-sm ${selectedFinalist?.id === finalist.id
+                <div className={`p-2 text-center font-semibold text-sm ${selectedSubmission?.id === submission.id
                     ? "bg-primary text-white"
-                    : finalist.judges.length > 0
+                    : submission.judges.length > 0
                       ? "bg-green-100 text-green-800"
                       : "bg-gray-100 text-gray-800"
                   }`}>
                   Submission #{index + 1}
-                  {finalist.judges.length > 0 && (
+                  {submission.judges.length > 0 && (
                     <span className="ml-2">
                       <UserCheck className="h-4 w-4 inline-block" />
-                      <span className="ml-1">{finalist.judges.length}</span>
+                      <span className="ml-1">{submission.judges.length}</span>
                     </span>
                   )}
                 </div>
                 
                 {/* Thumbnail/preview */}
                 <div className="h-32 bg-gray-100 flex items-center justify-center">
-                  {finalist.submissionFile ? (
+                  {submission.submissionFile ? (
                     <iframe
-                      src={finalist.submissionFile}
+                      src={submission.submissionFile}
                       className="w-full h-full"
-                      title={finalist.title}
+                      title={submission.title}
                     ></iframe>
                   ) : (
                     <FileText className="h-12 w-12 text-gray-400" />
@@ -604,17 +591,17 @@ export default function GeneralCategoriesPage() {
                 {/* Content */}
                 <div className="p-3">
                   <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
-                    {finalist.title}
+                    {submission.title}
                   </h3>
                   
                   <div className="text-xs text-gray-500 mb-2">
-                    {finalist.categoryName}
+                    {submission.categoryName}
                   </div>
                   
-                  {finalist.judges.length > 0 && (
+                  {submission.judges.length > 0 && (
                     <div className="bg-green-50 border border-green-200 rounded-md p-1 mt-1 text-center">
                       <span className="text-green-800 text-xs font-medium">
-                        Avg: {calculateAverageScore(finalist.judges) || "N/A"}
+                        Avg: {calculateAverageScore(submission.judges) || "N/A"}
                       </span>
                     </div>
                   )}
@@ -625,7 +612,7 @@ export default function GeneralCategoriesPage() {
         )}
         
         {/* Selected Submission Preview and Scoring */}
-        {selectedFinalist && (
+        {selectedSubmission && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Left side - Preview and details */}
             <div className="lg:col-span-3 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -633,30 +620,30 @@ export default function GeneralCategoriesPage() {
               <div className="p-4 border-b border-gray-200 bg-primary/5">
                 <div className="flex flex-wrap justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{selectedFinalist.title}</h2>
+                    <h2 className="text-xl font-semibold text-gray-900">{selectedSubmission.title}</h2>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
-                        {selectedFinalist.categoryName}
+                        {selectedSubmission.categoryName}
                       </span>
                       <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
-                        {new Date(selectedFinalist.submittedAt).toLocaleDateString()}
+                        {new Date(selectedSubmission.submittedAt).toLocaleDateString()}
                       </span>
                       <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs">
-                        ID: {selectedFinalist.submissionNumber}
+                        ID: {selectedSubmission.submissionNumber}
                       </span>
                     </div>
                   </div>
                   
                   {/* Average score badge */}
-                  {selectedFinalist.judges.length > 0 && (
+                  {selectedSubmission.judges.length > 0 && (
                     <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-center">
                       <div className="text-xs text-green-600 mb-1">Average Score</div>
                       <div className="text-xl font-bold text-green-700">
-                        {calculateAverageScore(selectedFinalist.judges) || "N/A"}
+                        {calculateAverageScore(selectedSubmission.judges) || "N/A"}
                       </div>
                       <div className="text-xs text-green-600">
-                        {selectedFinalist.judges.length} judge{selectedFinalist.judges.length !== 1 ? 's' : ''}
+                        {selectedSubmission.judges.length} judge{selectedSubmission.judges.length !== 1 ? 's' : ''}
                       </div>
                     </div>
                   )}
@@ -669,16 +656,16 @@ export default function GeneralCategoriesPage() {
                 <div className="relative">
                   <div className={`text-gray-700 text-sm ${showFullDescription ? 'max-h-none' : 'max-h-20 overflow-hidden'
                     }`}>
-                    <p className="whitespace-pre-line">{selectedFinalist.description || "No description provided."}</p>
+                    <p className="whitespace-pre-line">{selectedSubmission.description || "No description provided."}</p>
                   </div>
                   
                   {/* Gradient fade effect when collapsed */}
-                  {!showFullDescription && selectedFinalist.description && selectedFinalist.description.length > 300 && (
+                  {!showFullDescription && selectedSubmission.description && selectedSubmission.description.length > 300 && (
                     <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent z-10"></div>
                   )}
                   
                   {/* Show more/less button */}
-                  {selectedFinalist.description && selectedFinalist.description.length > 300 && (
+                  {selectedSubmission.description && selectedSubmission.description.length > 300 && (
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
                       className="mt-1 text-primary hover:text-primary/80 text-xs font-medium flex items-center relative z-20"
@@ -700,7 +687,7 @@ export default function GeneralCategoriesPage() {
               </div>
               
               {/* Judges' scores table */}
-             {selectedFinalist.judges.length > 0 && (
+             {selectedSubmission.judges.length > 0 && (
                 <div className="p-4 border-b border-gray-200 bg-primary/5">
                   <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
                     <Users className="h-4 w-4 mr-1" />
@@ -735,7 +722,7 @@ export default function GeneralCategoriesPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {selectedFinalist.judges.map((judgeScore) => {
+                        {selectedSubmission.judges.map((judgeScore) => {
                           const totalScore = calculateTotalScore(judgeScore.scores);
                           return (
                             <tr key={judgeScore.finalScoreId} className="hover:bg-gray-50">
@@ -1111,9 +1098,9 @@ export default function GeneralCategoriesPage() {
                     <div className="flex justify-between items-center pt-4">
                       <div className="flex gap-2">
                         <button
-                          onClick={handlePrevFinalist}
-                          disabled={finalists.findIndex(f => f.id === selectedFinalist.id) <= 0}
-                          className={`p-2 rounded-md ${finalists.findIndex(f => f.id === selectedFinalist.id) <= 0
+                          onClick={handlePrevSubmission}
+                          disabled={submissions.findIndex(f => f.id === selectedSubmission.id) <= 0}
+                          className={`p-2 rounded-md ${submissions.findIndex(f => f.id === selectedSubmission.id) <= 0
                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                               : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                             }`}
@@ -1123,9 +1110,9 @@ export default function GeneralCategoriesPage() {
                         </button>
                         
                         <button
-                          onClick={handleNextFinalist}
-                          disabled={finalists.findIndex(f => f.id === selectedFinalist.id) >= finalists.length - 1}
-                          className={`p-2 rounded-md ${finalists.findIndex(f => f.id === selectedFinalist.id) >= finalists.length - 1
+                          onClick={handleNextSubmission}
+                          disabled={submissions.findIndex(f => f.id === selectedSubmission.id) >= submissions.length - 1}
+                          className={`p-2 rounded-md ${submissions.findIndex(f => f.id === selectedSubmission.id) >= submissions.length - 1
                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                               : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                             }`}
@@ -1172,7 +1159,7 @@ export default function GeneralCategoriesPage() {
               </div>
               
               {/* Current Rankings */}
-              {finalists.filter(f => f.judges.length > 0).length > 0 && (
+              {submissions.filter(f => f.judges.length > 0).length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-6">
                   <div className="p-4 border-b border-gray-200 bg-amber-50">
                     <h3 className="font-semibold text-amber-800 flex items-center">
@@ -1183,7 +1170,7 @@ export default function GeneralCategoriesPage() {
                   
                   <div className="p-4">
                     <div className="space-y-2">
-                      {finalists
+                      {submissions
                         .filter(f => f.judges.length > 0)
                         .sort((a, b) => {
                           const scoreA = parseFloat(calculateAverageScore(a.judges) || "0");
@@ -1191,11 +1178,11 @@ export default function GeneralCategoriesPage() {
                           return scoreB - scoreA; // Sort by score descending
                         })
                         .slice(0, 10) // Show top 10 at most
-                        .map((finalist, index) => {
-                          const avgScore = calculateAverageScore(finalist.judges);
+                        .map((submission, index) => {
+                          const avgScore = calculateAverageScore(submission.judges);
                           return (
                             <div
-                              key={finalist.id}
+                              key={submission.id}
                               className={`flex items-center p-3 rounded-lg ${index === 0 ? 'bg-yellow-50 border border-yellow-200' :
                                   index === 1 ? 'bg-gray-50 border border-gray-200' :
                                     index === 2 ? 'bg-amber-50 border border-amber-200' :
@@ -1210,8 +1197,8 @@ export default function GeneralCategoriesPage() {
                                 {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-medium text-gray-900 truncate">{finalist.title}</h4>
-                                <p className="text-xs text-gray-500">{finalist.categoryName} • {finalist.judges.length} judge{finalist.judges.length !== 1 ? 's' : ''}</p>
+                                <h4 className="text-sm font-medium text-gray-900 truncate">{submission.title}</h4>
+                                <p className="text-xs text-gray-500">{submission.categoryName} • {submission.judges.length} judge{submission.judges.length !== 1 ? 's' : ''}</p>
                               </div>
                               <div className={`px-3 py-1 rounded font-bold ${index === 0 ? 'text-yellow-800 bg-yellow-100' :
                                   index === 1 ? 'text-gray-800 bg-gray-100' :
