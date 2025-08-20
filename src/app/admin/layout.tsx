@@ -15,7 +15,10 @@ import {
   FileText,
   BarChart2,
   Medal,
-  Menu
+  Menu,
+  Award,
+  List,
+  TrendingUp
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -71,27 +74,52 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
   
-  // Navigation items - only keep pages that exist
+  // Navigation items - organized by sections
   const navigationItems = [
+    // City Project Section (Top 5 system)
     {
       name: "Top 5 Selections",
       href: "/admin/top-five",
       icon: Trophy,
-      current: pathname === "/admin/top-five"
+      current: pathname === "/admin/top-five",
+      section: "City Project"
     },
     {
-      name: "Winners",
+      name: "Winners Scoring",
       href: "/admin/winners",
       icon: Medal,
-      current: pathname === "/admin/winners"
+      current: pathname === "/admin/winners",
+      section: "City Project"
     },
-     {
-      name: "Final Results",
+    {
+      name: "City Project Results",
       href: "/admin/winners/results",
       icon: BarChart2,
-      current: pathname === "/admin/winners/results"
+      current: pathname === "/admin/winners/results",
+      section: "City Project"
+    },
+    // General Categories Section (Dynamic system)
+    {
+      name: "Manage Selections",
+      href: "/admin/general-categories/selections",
+      icon: List,
+      current: pathname === "/admin/general-categories/selections",
+      section: "General Categories"
+    },
+    {
+      name: "General Scoring",
+      href: "/admin/general-categories",
+      icon: Award,
+      current: pathname === "/admin/general-categories",
+      section: "General Categories"
+    },
+    {
+      name: "General Results",
+      href: "/admin/general-categories/results",
+      icon: TrendingUp,
+      current: pathname === "/admin/general-categories/results",
+      section: "General Categories"
     }
-    // Additional pages can be added here when they're implemented
   ];
   
   // Toggle sidebar on mobile
@@ -202,35 +230,52 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <nav className="flex-1 px-4 pb-4 space-y-1 overflow-y-auto">
               <div className="pt-4 pb-2 mb-4 border-b border-gray-200">
                 <div className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Admin Navigation
+                  Competition Management
                 </div>
               </div>
               
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                    item.current
-                      ? 'bg-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  onClick={() => {
-                    // Close sidebar on mobile when navigating
-                    if (window.innerWidth < 768) {
-                      setSidebarOpen(false);
-                    }
-                  }}
-                >
-                  <item.icon
-                    className={`mr-3 flex-shrink-0 h-5 w-5 ${
-                      item.current ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
-                    }`}
-                    aria-hidden="true"
-                  />
-                  {item.name}
-                </Link>
-              ))}
+              {/* Group navigation items by section */}
+              {["City Project", "General Categories"].map((section) => {
+                const sectionItems = navigationItems.filter(item => item.section === section);
+                
+                return (
+                  <div key={section} className="space-y-1">
+                    {/* Section header */}
+                    <div className="px-2 pt-4 pb-1">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {section}
+                      </div>
+                    </div>
+                    
+                    {/* Section items */}
+                    {sectionItems.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                          item.current
+                            ? 'bg-primary text-white'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                        onClick={() => {
+                          // Close sidebar on mobile when navigating
+                          if (window.innerWidth < 768) {
+                            setSidebarOpen(false);
+                          }
+                        }}
+                      >
+                        <item.icon
+                          className={`mr-3 flex-shrink-0 h-5 w-5 ${
+                            item.current ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })}
             </nav>
           </div>
         </div>
