@@ -305,7 +305,7 @@ export default function GeneralCategoriesPage() {
     }
     
     // Check score ranges
-    const allScoreValues = Object.values(scores).map(score => parseInt(score));
+    const allScoreValues = Object.values(scores).map(score => parseFloat(score));
     
     for (const score of allScoreValues) {
       if (isNaN(score) || score < 1 || score > 10) {
@@ -407,11 +407,11 @@ export default function GeneralCategoriesPage() {
     if (!scores.score1 || !scores.score2 || !scores.score3 || !scores.score4) return null;
     
     return (
-      (parseInt(scores.score1) * 4) +
-      (parseInt(scores.score2) * 3) +
-      (parseInt(scores.score3) * 2) +
-      (parseInt(scores.score4) * 1)
-    );
+      (parseFloat(scores.score1) * 4) +
+      (parseFloat(scores.score2) * 3) +
+      (parseFloat(scores.score3) * 2) +
+      (parseFloat(scores.score4) * 1)
+    ).toFixed(1);
   };
   
   // Calculate average total score across all judges for a finalist
@@ -420,7 +420,8 @@ export default function GeneralCategoriesPage() {
     
     const totalScores = judges
       .map(j => calculateTotalScore(j.scores))
-      .filter(score => score !== null) as number[];
+      .filter(score => score !== null)
+      .map(score => parseFloat(score as string));
     
     if (totalScores.length === 0) return null;
     
@@ -732,25 +733,25 @@ export default function GeneralCategoriesPage() {
                               <td className="px-3 py-2 whitespace-nowrap text-center">
                                 <div className="flex flex-col">
                                   <span className="text-gray-800">{judgeScore.scores.score1}</span>
-                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score1) * 4})</span>
+                                  <span className="text-xs text-primary">({(parseFloat(judgeScore.scores.score1) * 4).toFixed(1)})</span>
                                 </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
                                 <div className="flex flex-col">
                                   <span className="text-gray-800">{judgeScore.scores.score2}</span>
-                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score2) * 3})</span>
+                                  <span className="text-xs text-primary">({(parseFloat(judgeScore.scores.score2) * 3).toFixed(1)})</span>
                                 </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
                                 <div className="flex flex-col">
                                   <span className="text-gray-800">{judgeScore.scores.score3}</span>
-                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score3) * 2})</span>
+                                  <span className="text-xs text-primary">({(parseFloat(judgeScore.scores.score3) * 2).toFixed(1)})</span>
                                 </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center">
                                 <div className="flex flex-col">
                                   <span className="text-gray-800">{judgeScore.scores.score4}</span>
-                                  <span className="text-xs text-primary">({parseInt(judgeScore.scores.score4) * 1})</span>
+                                  <span className="text-xs text-primary">({(parseFloat(judgeScore.scores.score4) * 1).toFixed(1)})</span>
                                 </div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-center font-medium text-primary">
@@ -917,9 +918,10 @@ export default function GeneralCategoriesPage() {
                           id="score1"
                           min="1"
                           max="10"
+                          step="0.1"
                           value={scores.score1}
                           onChange={(e) => {
-                            const value = parseInt(e.target.value);
+                            const value = parseFloat(e.target.value);
                             if (!isNaN(value)) {
                               // Clamp value between 1 and 10
                               const clampedValue = Math.min(Math.max(value, 1), 10);
@@ -929,7 +931,7 @@ export default function GeneralCategoriesPage() {
                             }
                           }}
                           onBlur={(e) => {
-                            if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+                            if (e.target.value === "" || isNaN(parseFloat(e.target.value))) {
                               setScores({ ...scores, score1: "1" });
                             }
                           }}
@@ -950,9 +952,10 @@ export default function GeneralCategoriesPage() {
                           id="score2"
                           min="1"
                           max="10"
+                          step="0.1"
                           value={scores.score2}
                           onChange={(e) => {
-                            const value = parseInt(e.target.value);
+                            const value = parseFloat(e.target.value);
                             if (!isNaN(value)) {
                               // Clamp value between 1 and 10
                               const clampedValue = Math.min(Math.max(value, 1), 10);
@@ -962,7 +965,7 @@ export default function GeneralCategoriesPage() {
                             }
                           }}
                           onBlur={(e) => {
-                            if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+                            if (e.target.value === "" || isNaN(parseFloat(e.target.value))) {
                               setScores({ ...scores, score2: "1" });
                             }
                           }}
@@ -983,9 +986,10 @@ export default function GeneralCategoriesPage() {
                           id="score3"
                           min="1"
                           max="10"
+                          step="0.1"
                           value={scores.score3}
                           onChange={(e) => {
-                            const value = parseInt(e.target.value);
+                            const value = parseFloat(e.target.value);
                             if (!isNaN(value)) {
                               // Clamp value between 1 and 10
                               const clampedValue = Math.min(Math.max(value, 1), 10);
@@ -995,7 +999,7 @@ export default function GeneralCategoriesPage() {
                             }
                           }}
                           onBlur={(e) => {
-                            if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+                            if (e.target.value === "" || isNaN(parseFloat(e.target.value))) {
                               setScores({ ...scores, score3: "1" });
                             }
                           }}
@@ -1016,9 +1020,10 @@ export default function GeneralCategoriesPage() {
                           id="score4"
                           min="1"
                           max="10"
+                          step="0.1"
                           value={scores.score4}
                           onChange={(e) => {
-                            const value = parseInt(e.target.value);
+                            const value = parseFloat(e.target.value);
                             if (!isNaN(value)) {
                               // Clamp value between 1 and 10
                               const clampedValue = Math.min(Math.max(value, 1), 10);
@@ -1028,7 +1033,7 @@ export default function GeneralCategoriesPage() {
                             }
                           }}
                           onBlur={(e) => {
-                            if (e.target.value === "" || isNaN(parseInt(e.target.value))) {
+                            if (e.target.value === "" || isNaN(parseFloat(e.target.value))) {
                               setScores({ ...scores, score4: "1" });
                             }
                           }}
@@ -1043,16 +1048,16 @@ export default function GeneralCategoriesPage() {
                       <h4 className="text-sm font-medium text-primary mb-2">Total Score Calculation</h4>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="text-gray-600">Design Content (40%):</div>
-                        <div className="font-medium text-gray-800">{scores.score1 ? parseInt(scores.score1) * 4 : "-"}</div>
+                        <div className="font-medium text-gray-800">{scores.score1 ? (parseFloat(scores.score1) * 4).toFixed(1) : "-"}</div>
                         
                         <div className="text-gray-600">Color Application (30%):</div>
-                        <div className="font-medium text-gray-800">{scores.score2 ? parseInt(scores.score2) * 3 : "-"}</div>
+                        <div className="font-medium text-gray-800">{scores.score2 ? (parseFloat(scores.score2) * 3).toFixed(1) : "-"}</div>
                         
                         <div className="text-gray-600">Technological Content (20%):</div>
-                        <div className="font-medium text-gray-800">{scores.score3 ? parseInt(scores.score3) * 2 : "-"}</div>
+                        <div className="font-medium text-gray-800">{scores.score3 ? (parseFloat(scores.score3) * 2).toFixed(1) : "-"}</div>
                         
                         <div className="text-gray-600">Innovative Solution (10%):</div>
-                        <div className="font-medium text-gray-800">{scores.score4 ? parseInt(scores.score4) * 1 : "-"}</div>
+                        <div className="font-medium text-gray-800">{scores.score4 ? (parseFloat(scores.score4) * 1).toFixed(1) : "-"}</div>
                         
                         <div className="col-span-2 border-t border-gray-200 pt-2 mt-1"></div>
                         

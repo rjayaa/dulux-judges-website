@@ -127,10 +127,10 @@ export async function GET(request: NextRequest) {
         
         // Calculate weighted score
         const weightedScore = (
-          (score.score1 * 4) + 
-          (score.score2 * 3) + 
-          (score.score3 * 2) + 
-          (score.score4 * 1)
+          (parseFloat(score.score1) * 4) + 
+          (parseFloat(score.score2) * 3) + 
+          (parseFloat(score.score3) * 2) + 
+          (parseFloat(score.score4) * 1)
         );
         
         return {

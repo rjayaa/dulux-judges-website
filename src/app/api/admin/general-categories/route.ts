@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check score ranges
-    const allScores = [parseInt(score1), parseInt(score2), parseInt(score3), parseInt(score4)];
+    const allScores = [parseFloat(score1), parseFloat(score2), parseFloat(score3), parseFloat(score4)];
     for (const score of allScores) {
       if (isNaN(score) || score < 1 || score > 10) {
         return NextResponse.json({ 
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
         UPDATE GeneralFinalScores 
         SET score1 = ?, score2 = ?, score3 = ?, score4 = ?, comments = ?, updatedAt = CURRENT_TIMESTAMP
         WHERE id = ?
-      `, [parseInt(score1), parseInt(score2), parseInt(score3), parseInt(score4), comments || null, scoreId]);
+      `, [parseFloat(score1), parseFloat(score2), parseFloat(score3), parseFloat(score4), comments || null, scoreId]);
     } else {
       // Insert new score
       const scoreId = `gfs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
         INSERT INTO GeneralFinalScores 
         (id, juryId, submissionId, categoryId, score1, score2, score3, score4, comments)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [scoreId, juryId, submissionId, categoryId, parseInt(score1), parseInt(score2), parseInt(score3), parseInt(score4), comments || null]);
+      `, [scoreId, juryId, submissionId, categoryId, parseFloat(score1), parseFloat(score2), parseFloat(score3), parseFloat(score4), comments || null]);
     }
     
     return NextResponse.json({ 
